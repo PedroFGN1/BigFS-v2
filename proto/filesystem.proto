@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package filesystem;
+
+// Serviço que representa operações sobre um sistema de arquivos distribuído
+service FileSystemService {
+  rpc Listar (CaminhoRequest) returns (ConteudoResponse);
+  rpc Copiar (CopyRequest) returns (OperacaoResponse);
+  rpc Upload (FileUploadRequest) returns (OperacaoResponse);
+  rpc Download (CaminhoRequest) returns (FileDownloadResponse);
+  rpc CopiarInterno (CopyRequest) returns (OperacaoResponse);
+  rpc Deletar (CaminhoRequest) returns (OperacaoResponse);
+}
+
+// Representa uma requisição com um único caminho (para ls e delete)
+message CaminhoRequest {
+  string path = 1;
+}
+
+// Envio de arquivo (upload)
+message FileUploadRequest {
+  string path = 1;       // Caminho de destino no servidor
+  bytes dados = 2;       // Conteúdo do arquivo
+}
+
+// Resposta ao download de arquivo
+message FileDownloadResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  bytes dados = 3;
+}
+
+message CopyRequest {
+  string origem = 1;
+  string destino = 2;
+}
+
+// Resposta genérica para operações como copiar e deletar
+message OperacaoResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+}
+
+// Resposta para a listagem de diretórios ou arquivos
+message ConteudoResponse {
+  bool sucesso = 1;
+  string tipo = 2; // "arquivo" ou "diretorio"
+  repeated string conteudo = 3;
+  string mensagem = 4;
+}
