@@ -14,3 +14,18 @@ def listar_conteudo(caminho_base, caminho_relativo):
         return True, "Conteúdo listado com sucesso", "diretorio", conteudo
     except Exception as e:
         return False, str(e), None, None
+
+def deletar_arquivo(caminho_base, caminho_relativo):
+    caminho_absoluto = os.path.abspath(os.path.join(caminho_base, caminho_relativo.lstrip("/")))
+
+    if not os.path.exists(caminho_absoluto):
+        return False, "Arquivo ou diretório não encontrado."
+
+    if os.path.isdir(caminho_absoluto):
+        return False, "Não é permitido remover diretórios neste modo."
+
+    try:
+        os.remove(caminho_absoluto)
+        return True, "Arquivo removido com sucesso."
+    except Exception as e:
+        return False, f"Erro ao remover: {str(e)}"

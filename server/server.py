@@ -3,13 +3,18 @@ from concurrent import futures
 import time
 import os
 
-import proto.filesystem_pb2 as filesystem_pb2
-import proto.filesystem_pb2_grpc as filesystem_pb2_grpc
+import sys
+# Adiciona o diretório proto ao sys.path para importar os arquivos gerados
+# Isso é necessário para que o Python encontre os arquivos .proto gerados
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proto')))
 
-from server.file_manager import listar_conteudo
+import filesystem_pb2 as filesystem_pb2
+import filesystem_pb2_grpc as filesystem_pb2_grpc
+
+from file_manager import listar_conteudo, deletar_arquivo
 
 # Caminho do diretório exportado
-BASE_DIR = os.path.abspath("../shared")
+BASE_DIR = os.path.abspath("../storage")
 
 class FileSystemServiceServicer(filesystem_pb2_grpc.FileSystemServiceServicer):
 
@@ -21,6 +26,14 @@ class FileSystemServiceServicer(filesystem_pb2_grpc.FileSystemServiceServicer):
             mensagem=mensagem,
             tipo=tipo or "",
             conteudo=conteudo or []
+        )
+    
+    def Deletar(self, request, context):
+        sucesso, mensagem = deletar_arquivo(BASE_DIR, request.path)
+
+        return filesystem_pb2.OperacaoResponse(
+            sucesso=sucesso,
+            mensagem=mensagem
         )
 
 def serve():
