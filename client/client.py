@@ -44,7 +44,7 @@ def deletar(stub):
         print("❌ Erro:", response.mensagem)
 
 def upload(stub):
-    caminho_local = input("Digite o caminho do arquivo local: ").strip()
+    caminho_local = input("Digite o caminho do arquivo local (ex: caminho relativo): ").strip()
     caminho_remoto = input("Digite o caminho remoto de destino (ex: remoto:/destino.txt): ").strip()
 
     if not os.path.exists(caminho_local):
