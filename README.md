@@ -96,7 +96,7 @@ O cliente oferece um menu interativo com as seguintes opções:
 
 ### 📜 Arquitetura gRPC
 O serviço FileSystemService define os seguintes métodos:
-    ```proto
+    ```bash
     service FileSystemService {
     rpc Listar (CaminhoRequest) returns (ConteudoResponse);
     rpc Deletar (CaminhoRequest) returns (OperacaoResponse);
@@ -105,6 +105,10 @@ O serviço FileSystemService define os seguintes métodos:
     rpc CopiarInterno (CopyRequest) returns (OperacaoResponse);
     }
 
-### Print de Execução:
+## Print de Execução:
+
+### Cliente
 ![terminal do cliente](images\client.png)
+
+### Servidor
 ![terminal do servidor](images\server.png)
