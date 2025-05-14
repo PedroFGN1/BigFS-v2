@@ -32,7 +32,7 @@ O projeto permite operações remotas como listar, copiar, deletar, enviar e bai
 
     Instale com:
 
-    pip install -r requirements.txt
+        pip install -r requirements.txt
 
 ### 📦 Geração dos arquivos gRPC
 
@@ -54,3 +54,47 @@ O cliente oferece um menu interativo com as seguintes opções:
 1. Listar arquivos remotos
     ```bash
     ls remoto:/subpasta
+
+2. Deletar arquivo remoto
+    ```bash
+    delete remoto:/arquivo.txt
+
+3. Enviar arquivo local para o servidor (upload)
+    ```bash
+    copy local.txt remoto:/subpasta/destino.txt
+
+4. Baixar arquivo remoto para local (download)
+    ```bash
+    copy remoto:/arquivo.txt local.txt
+
+5. Copiar arquivo remoto para outro local remoto
+    ```bash
+    copy remoto:/arquivo1.txt remoto:/copia_arquivo1.txt
+
+### 🔒 Segurança
+    *Todos os caminhos são restritos ao diretório storage/.
+
+    *Qualquer tentativa de acessar fora do escopo resulta em erro.
+
+    *Uploads e downloads suportam qualquer tipo de arquivo via bytes.
+
+### 🧪 Exemplos práticos
+1. **Upload**
+    Crie arquivos_local/exemplo.txt
+    Use a opção 3 no menu e envie como:
+    ```bash
+    arquivos_local/exemplo.txt → remoto:/exemplo.txt
+Download
+Escolha a opção 4 no menu:
+
+bash
+Copiar
+Editar
+remoto:/exemplo.txt → arquivos_local/copia.txt
+Cópia remota
+Com o arquivo remoto:/exemplo.txt já no servidor:
+
+nginx
+Copiar
+Editar
+copy remoto:/exemplo.txt remoto:/backup/exemplo_bkp.txt
