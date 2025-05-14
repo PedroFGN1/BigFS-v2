@@ -84,14 +84,21 @@ def serve():
         FileSystemServiceServicer(), server
     )
     server.add_insecure_port("[::]:50051")
-    print("Servidor gRPC iniciado em [::]:50051...")
     server.start()
+    print("Conectando ao servidor...")
+    time.sleep(1)  # Aguarda um segundo para garantir que o servidor esteja pronto
+    print(f"Servidor rodando na porta 50051..."+ f"Conexão estabelecida em: " + time.strftime("%d-%m-%Y ás %H:%M:%S")) # Formato de data e hora
+    print("Pressione Ctrl+C para parar o servidor.")
     try:
         while True:
             time.sleep(86400)
     except KeyboardInterrupt:
         print("Encerrando servidor...")
+    finally:
         server.stop(0)
+        print("Servidor parado.")
+    server.wait_for_termination() # Aguarda a finalização do servidor
+
 
 if __name__ == "__main__":
     serve()

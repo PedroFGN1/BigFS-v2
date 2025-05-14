@@ -1,6 +1,6 @@
 # BigFS - Sistema de Arquivos Distribuído com gRPC
 
-**Autor:** Pedro Ferreira Galvão Neto
+👨‍💻 **Autor:** Pedro Ferreira Galvão Neto — Projeto acadêmico para a disciplina Sistemas Distribuídos I
 
 BigFS é uma implementação educacional de um sistema **NFS (Network File System)** usando a arquitetura cliente-servidor com gRPC em Python.
 
@@ -80,21 +80,31 @@ O cliente oferece um menu interativo com as seguintes opções:
 
 ### 🧪 Exemplos práticos
 1. **Upload**
-    Crie arquivos_local/exemplo.txt /n
-    Use a opção 3 no menu e envie como: /n
+    Crie arquivos_local/exemplo.txt. Use a opção 3 no menu e envie como: 
     ```bash
     arquivos_local/exemplo.txt → remoto:/exemplo.txt
-Download
-Escolha a opção 4 no menu:
 
-bash
-Copiar
-Editar
-remoto:/exemplo.txt → arquivos_local/copia.txt
-Cópia remota
-Com o arquivo remoto:/exemplo.txt já no servidor:
+2. **Download**
+    Escolha a opção 4 no menu:
+    ```bash
+    remoto:/exemplo.txt → arquivos_local/copia.txt
 
-nginx
-Copiar
-Editar
-copy remoto:/exemplo.txt remoto:/backup/exemplo_bkp.txt
+3. **Cópia remota**
+    Com o arquivo remoto:/exemplo.txt já no servidor:
+    ```bash
+    copy remoto:/exemplo.txt remoto:/backup/exemplo_bkp.txt
+
+### 📜 Arquitetura gRPC
+O serviço FileSystemService define os seguintes métodos:
+    ```proto
+    service FileSystemService {
+    rpc Listar (CaminhoRequest) returns (ConteudoResponse);
+    rpc Deletar (CaminhoRequest) returns (OperacaoResponse);
+    rpc Upload (FileUploadRequest) returns (OperacaoResponse);
+    rpc Download (CaminhoRequest) returns (FileDownloadResponse);
+    rpc CopiarInterno (CopyRequest) returns (OperacaoResponse);
+    }
+
+### Print de Execução:
+![terminal do cliente](images\client.png)
+![terminal do servidor](images\server.png)
