@@ -108,7 +108,7 @@ O serviço FileSystemService define os seguintes métodos:
 ## Print de Execução:
 
 ### Cliente
-![terminal do cliente](images\client.png)
+![terminal do cliente](.\images\client.png)
 
 ### Servidor
-![terminal do servidor](images\server.png)
+![terminal do servidor](.\images\server.png)
