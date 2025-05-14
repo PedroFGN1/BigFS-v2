@@ -11,13 +11,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'p
 import filesystem_pb2 as filesystem_pb2
 import filesystem_pb2_grpc as filesystem_pb2_grpc
 
-from file_manager import listar_conteudo, deletar_arquivo
+from file_manager import listar_conteudo, deletar_arquivo, salvar_arquivo, ler_arquivo
 
 # Caminho do diretório exportado
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../storage"))
 
 class FileSystemServiceServicer(filesystem_pb2_grpc.FileSystemServiceServicer):
 
+    # Método para listar arquivos e diretórios
+    # O método recebe um caminho e retorna o conteúdo desse caminho
     def Listar(self, request, context):
 
         try:
@@ -37,12 +39,33 @@ class FileSystemServiceServicer(filesystem_pb2_grpc.FileSystemServiceServicer):
                 conteudo=[]
             )
     
+    # Método para deletar arquivos
+    # O método recebe um caminho e deleta o arquivo correspondente
     def Deletar(self, request, context):
         sucesso, mensagem = deletar_arquivo(BASE_DIR, request.path)
 
         return filesystem_pb2.OperacaoResponse(
             sucesso=sucesso,
             mensagem=mensagem
+        )
+    
+    # Método para upload de arquivos
+    # O método recebe um caminho e os dados do arquivo
+    def Upload(self, request, context):
+        sucesso, mensagem = salvar_arquivo(BASE_DIR, request.path, request.dados)
+        return filesystem_pb2.OperacaoResponse(
+            sucesso=sucesso,
+            mensagem=mensagem
+        )
+
+    # Método para download de arquivos
+    # O método recebe um caminho e retorna os dados do arquivo
+    def Download(self, request, context):
+        sucesso, mensagem, dados = ler_arquivo(BASE_DIR, request.path)
+        return filesystem_pb2.FileDownloadResponse(
+            sucesso=sucesso,
+            mensagem=mensagem,
+            dados=dados or b""
         )
 
 def serve():

@@ -1,5 +1,6 @@
 import os
 
+
 def listar_conteudo(caminho_base, caminho_relativo):
     # Normaliza o caminho relativo
     print(f"[DEBUG] BASE: {caminho_base}, REQ: {caminho_relativo}")
@@ -23,6 +24,7 @@ def listar_conteudo(caminho_base, caminho_relativo):
     except Exception as e:
         return False, str(e), None, None
 
+
 def deletar_arquivo(caminho_base, caminho_relativo):
     caminho_absoluto = os.path.abspath(os.path.join(caminho_base, caminho_relativo.lstrip("/")))
 
@@ -37,3 +39,30 @@ def deletar_arquivo(caminho_base, caminho_relativo):
         return True, "Arquivo removido com sucesso."
     except Exception as e:
         return False, f"Erro ao remover: {str(e)}"
+
+
+def salvar_arquivo(caminho_base, caminho_relativo, dados):
+    caminho_absoluto = os.path.abspath(os.path.join(caminho_base, caminho_relativo.lstrip("/")))
+    diretorio = os.path.dirname(caminho_absoluto)
+
+    try:
+        os.makedirs(diretorio, exist_ok=True)  # garante que diretórios intermediários existam
+        with open(caminho_absoluto, "wb") as f:
+            f.write(dados)
+        return True, "Arquivo salvo com sucesso."
+    except Exception as e:
+        return False, f"Erro ao salvar arquivo: {str(e)}"
+
+
+def ler_arquivo(caminho_base, caminho_relativo):
+    caminho_absoluto = os.path.abspath(os.path.join(caminho_base, caminho_relativo.lstrip("/")))
+
+    if not os.path.isfile(caminho_absoluto):
+        return False, "Arquivo não encontrado ou não é um arquivo.", None
+
+    try:
+        with open(caminho_absoluto, "rb") as f:
+            dados = f.read()
+        return True, "Arquivo lido com sucesso.", dados
+    except Exception as e:
+        return False, f"Erro ao ler arquivo: {str(e)}", None

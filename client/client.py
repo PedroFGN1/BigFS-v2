@@ -43,11 +43,64 @@ def deletar(stub):
     else:
         print("❌ Erro:", response.mensagem)
 
+def upload(stub):
+    caminho_local = input("Digite o caminho do arquivo local: ").strip()
+    caminho_remoto = input("Digite o caminho remoto de destino (ex: remoto:/destino.txt): ").strip()
+
+    if not os.path.exists(caminho_local):
+        print("❌ Arquivo local não encontrado.")
+        return
+
+    if not caminho_remoto.startswith("remoto:/"):
+        print("❌ Caminho remoto inválido.")
+        return
+
+    with open(caminho_local, "rb") as f:
+        dados = f.read()
+
+    request = filesystem_pb2.FileUploadRequest(
+        path=caminho_remoto.replace("remoto:/", "", 1),
+        dados=dados
+    )
+
+    response = stub.Upload(request)
+    if response.sucesso:
+        print("✅", response.mensagem)
+    else:
+        print("❌ Erro:", response.mensagem)
+
+def download(stub):
+    caminho_remoto = input("Digite o caminho remoto (ex: remoto:/arquivo.txt): ").strip()
+    caminho_local = input("Digite o caminho local para salvar o arquivo: ").strip()
+
+    if not caminho_remoto.startswith("remoto:/"):
+        print("❌ Caminho remoto inválido.")
+        return
+
+    request = filesystem_pb2.CaminhoRequest(
+        path=caminho_remoto.replace("remoto:/", "", 1)
+    )
+
+    response = stub.Download(request)
+
+    if response.sucesso:
+        try:
+            with open(caminho_local, "wb") as f:
+                f.write(response.dados)
+            print("✅ Arquivo salvo com sucesso em:", caminho_local)
+        except Exception as e:
+            print("❌ Erro ao salvar o arquivo local:", str(e))
+    else:
+        print("❌ Erro no download:", response.mensagem)
+
+
 def menu():
     print("\n--- Menu BigFS Client ---")
     print("1. Listar arquivos (ls)")
     print("2. Deletar arquivo (delete)")
-    print("3. Sair")
+    print("3. Enviar arquivo para o servidor (upload)")
+    print("4. Baixar arquivo do servidor (download)")
+    print("5. Sair")
 
 def main():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -62,6 +115,10 @@ def main():
             elif escolha == "2":
                 deletar(stub)
             elif escolha == "3":
+                upload(stub)
+            elif escolha == "4":
+                download(stub)
+            elif escolha == "5":
                 print("Encerrando cliente.")
                 break
             else:
