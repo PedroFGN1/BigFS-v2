@@ -1,5 +1,5 @@
 import os
-
+import shutil
 
 def listar_conteudo(caminho_base, caminho_relativo):
     # Normaliza o caminho relativo
@@ -66,3 +66,23 @@ def ler_arquivo(caminho_base, caminho_relativo):
         return True, "Arquivo lido com sucesso.", dados
     except Exception as e:
         return False, f"Erro ao ler arquivo: {str(e)}", None
+
+
+def copiar_arquivo(caminho_base, origem_relativa, destino_relativa):
+    origem_abs = os.path.abspath(os.path.join(caminho_base, origem_relativa.strip("\\/")))
+    destino_abs = os.path.abspath(os.path.join(caminho_base, destino_relativa.strip("\\/")))
+
+    # Verificação de segurança
+    base_abs = os.path.abspath(caminho_base)
+    if not origem_abs.startswith(base_abs) or not destino_abs.startswith(base_abs):
+        return False, "Acesso negado: caminho fora da área exportada."
+
+    if not os.path.isfile(origem_abs):
+        return False, "Arquivo de origem não encontrado ou não é um arquivo."
+
+    try:
+        os.makedirs(os.path.dirname(destino_abs), exist_ok=True)
+        shutil.copy2(origem_abs, destino_abs)
+        return True, "Arquivo copiado com sucesso."
+    except Exception as e:
+        return False, f"Erro ao copiar: {str(e)}"

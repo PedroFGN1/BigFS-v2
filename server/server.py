@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'p
 import filesystem_pb2 as filesystem_pb2
 import filesystem_pb2_grpc as filesystem_pb2_grpc
 
-from file_manager import listar_conteudo, deletar_arquivo, salvar_arquivo, ler_arquivo
+from file_manager import listar_conteudo, deletar_arquivo, salvar_arquivo, ler_arquivo, copiar_arquivo
 
 # Caminho do diretório exportado
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../storage"))
@@ -67,6 +67,16 @@ class FileSystemServiceServicer(filesystem_pb2_grpc.FileSystemServiceServicer):
             mensagem=mensagem,
             dados=dados or b""
         )
+    
+    # Método para copiar arquivos
+    # O método recebe um caminho de origem e um caminho de destino
+    def CopiarInterno(self, request, context):
+        sucesso, mensagem = copiar_arquivo(BASE_DIR, request.origem, request.destino)
+        return filesystem_pb2.OperacaoResponse(
+            sucesso=sucesso,
+            mensagem=mensagem
+        )
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

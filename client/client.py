@@ -93,6 +93,25 @@ def download(stub):
     else:
         print("❌ Erro no download:", response.mensagem)
 
+def copiar_remoto(stub):
+    origem = input("Digite o caminho remoto de origem (ex: remoto:/origem.txt): ").strip()
+    destino = input("Digite o caminho remoto de destino (ex: remoto:/copia.txt): ").strip()
+
+    if not origem.startswith("remoto:/") or not destino.startswith("remoto:/"):
+        print("❌ Caminhos remotos inválidos.")
+        return
+
+    request = filesystem_pb2.CopyRequest(
+        origem=origem.replace("remoto:/", "", 1).strip("\\/"),
+        destino=destino.replace("remoto:/", "", 1).strip("\\/")
+    )
+
+    response = stub.CopiarInterno(request)
+    if response.sucesso:
+        print("✅", response.mensagem)
+    else:
+        print("❌ Erro:", response.mensagem)
+
 
 def menu():
     print("\n--- Menu BigFS Client ---")
@@ -100,7 +119,8 @@ def menu():
     print("2. Deletar arquivo (delete)")
     print("3. Enviar arquivo para o servidor (upload)")
     print("4. Baixar arquivo do servidor (download)")
-    print("5. Sair")
+    print("5. Copiar entre arquivos remotos")
+    print("6. Sair")
 
 def main():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -119,6 +139,8 @@ def main():
             elif escolha == "4":
                 download(stub)
             elif escolha == "5":
+                copiar_remoto(stub)
+            elif escolha == "6":
                 print("Encerrando cliente.")
                 break
             else:
