@@ -111,4 +111,4 @@ O cliente oferece um menu interativo com as seguintes opções:
 ![terminal do cliente](images/client.png)
 
 ### Servidor
-![terminal do servidor](images\server.png)
+![terminal do servidor](images/server.png)
