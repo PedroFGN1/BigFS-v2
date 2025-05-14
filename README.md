@@ -9,18 +9,18 @@ O projeto permite operações remotas como listar, copiar, deletar, enviar e bai
 ---
 
 ## 📁 Estrutura do Projeto
-BigFS-v2/
-├── client/ # Cliente interativo gRPC
-│ └── client.py
-├── server/ # Servidor NFS
-│ ├── server.py
-│ └── file_manager.py
-├── proto/ # Definições .proto e gerados
-│ └── filesystem.proto
-├── storage/ # Diretório compartilhado exportado pelo servidor
-├── local/ # Pasta opcional para testes locais
-├── requirements.txt
-└── README.md
+    BigFS-v2/
+    ├── client/ # Cliente interativo gRPC
+    │ └── client.py
+    ├── server/ # Servidor NFS
+    │ ├── server.py
+    │ └── file_manager.py
+    ├── proto/ # Definições .proto e gerados
+    │ └── filesystem.proto
+    ├── storage/ # Diretório compartilhado exportado pelo servidor
+    ├── local/ # Pasta opcional para testes locais
+    ├── requirements.txt
+    └── README.md
 
 ---
 
@@ -32,11 +32,10 @@ BigFS-v2/
 
     Instale com:
 
-    ```bash
     pip install -r requirements.txt
 
 ### 📦 Geração dos arquivos gRPC
-    ```bash
+
     python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. proto/filesystem.proto
 
 ### 🚀 Como executar
