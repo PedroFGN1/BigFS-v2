@@ -8,6 +8,7 @@ import filesystem_pb2
 import filesystem_pb2_grpc
 
 def exibir_listagem(response):
+
     if response.sucesso:
         print(f"\nTipo: {response.tipo}")
         for item in response.conteudo:
@@ -21,7 +22,8 @@ def listar(stub):
         print("Caminho remoto inválido.")
         return
 
-    caminho_remoto = caminho.replace("remoto:/", "", 1)
+    caminho_remoto = caminho.replace("remoto:/", "", 1).strip("\\/")
+
     request = filesystem_pb2.CaminhoRequest(path=caminho_remoto)
     response = stub.Listar(request)
     exibir_listagem(response)
@@ -32,7 +34,8 @@ def deletar(stub):
         print("Caminho remoto inválido.")
         return
 
-    caminho_remoto = caminho.replace("remoto:/", "", 1)
+    caminho_remoto = caminho.replace("remoto:/", "", 1).strip("\\/")
+
     request = filesystem_pb2.CaminhoRequest(path=caminho_remoto)
     response = stub.Deletar(request)
     if response.sucesso:

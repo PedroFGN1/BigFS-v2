@@ -14,19 +14,28 @@ import filesystem_pb2_grpc as filesystem_pb2_grpc
 from file_manager import listar_conteudo, deletar_arquivo
 
 # Caminho do diretório exportado
-BASE_DIR = os.path.abspath("../storage")
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../storage"))
 
 class FileSystemServiceServicer(filesystem_pb2_grpc.FileSystemServiceServicer):
 
     def Listar(self, request, context):
-        sucesso, mensagem, tipo, conteudo = listar_conteudo(BASE_DIR, request.path)
 
-        return filesystem_pb2.ConteudoResponse(
-            sucesso=sucesso,
-            mensagem=mensagem,
-            tipo=tipo or "",
-            conteudo=conteudo or []
-        )
+        try:
+            sucesso, mensagem, tipo, conteudo = listar_conteudo(BASE_DIR, request.path)
+            return filesystem_pb2.ConteudoResponse(
+                sucesso=sucesso,
+                mensagem=mensagem,
+                tipo=tipo or "",
+                conteudo=conteudo or []
+            )
+        
+        except Exception as e:
+            return filesystem_pb2.ConteudoResponse(
+                sucesso=False,
+                mensagem=f"Erro interno no servidor: {str(e)}",
+                tipo="",
+                conteudo=[]
+            )
     
     def Deletar(self, request, context):
         sucesso, mensagem = deletar_arquivo(BASE_DIR, request.path)
