@@ -72,16 +72,16 @@ O cliente oferece um menu interativo com as seguintes opções:
     copy remoto:/arquivo1.txt remoto:/copia_arquivo1.txt
 
 ### 🔒 Segurança
-    *Todos os caminhos são restritos ao diretório storage/.
+*Todos os caminhos são restritos ao diretório storage/.
 
-    *Qualquer tentativa de acessar fora do escopo resulta em erro.
+*Qualquer tentativa de acessar fora do escopo resulta em erro.
 
-    *Uploads e downloads suportam qualquer tipo de arquivo via bytes.
+*Uploads e downloads suportam qualquer tipo de arquivo via bytes.
 
 ### 🧪 Exemplos práticos
 1. **Upload**
-    Crie arquivos_local/exemplo.txt
-    Use a opção 3 no menu e envie como:
+    Crie arquivos_local/exemplo.txt /n
+    Use a opção 3 no menu e envie como: /n
     ```bash
     arquivos_local/exemplo.txt → remoto:/exemplo.txt
 Download
