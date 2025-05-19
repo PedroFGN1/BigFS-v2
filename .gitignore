@@ -3,3 +3,4 @@
 /server/__pycache__
 /proto/__pycache__
 /.pytest_cache
+/tests
