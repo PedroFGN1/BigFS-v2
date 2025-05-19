@@ -79,7 +79,11 @@ class FileSystemServiceServicer(filesystem_pb2_grpc.FileSystemServiceServicer):
 
 
 def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
+                         options=[
+                             ('grpc.max_send_message_length', 1024 * 1024 * 1024),
+                             ('grpc.max_receive_message_length', 1024 * 1024 * 1024)  
+                         ])  #  1 GB
     filesystem_pb2_grpc.add_FileSystemServiceServicer_to_server(
         FileSystemServiceServicer(), server
     )

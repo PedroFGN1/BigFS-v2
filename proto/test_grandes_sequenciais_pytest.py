@@ -4,10 +4,10 @@ import grpc
 import pytest
 import time
 
-from proto import filesystem_pb2, filesystem_pb2_grpc
+import filesystem_pb2, filesystem_pb2_grpc
 
 TOTAL_ARQUIVOS = 10
-TAMANHO_MB = 10  # Altere para 2048 para testar com 2 GB reais
+TAMANHO_MB = 1024  # Altere para 2048 para testar com 2 GB reais
 
 @pytest.fixture(scope="module")
 def grpc_stub():

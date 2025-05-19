@@ -123,7 +123,11 @@ def menu():
     print("6. Sair")
 
 def main():
-    with grpc.insecure_channel("localhost:50051") as channel:
+    with grpc.insecure_channel("localhost:50051",
+                               options=[
+                                   ("grpc.max_send_message_length", 1024 * 1024 * 1024),
+                                   ("grpc.max_receive_message_length", 1024 * 1024 * 1024)
+                               ]) as channel:
         stub = filesystem_pb2_grpc.FileSystemServiceStub(channel)
 
         while True:
