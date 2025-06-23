@@ -1,0 +1,366 @@
+syntax = "proto3";
+
+package filesystem;
+
+// ========================================
+// SERVIÇOS PRINCIPAIS
+// ========================================
+
+// Serviço que representa operações sobre um sistema de arquivos distribuído
+service FileSystemService {
+  rpc Listar (CaminhoRequest) returns (ConteudoResponse);
+  rpc Copiar (CopyRequest) returns (OperacaoResponse);
+  rpc Upload (FileUploadRequest) returns (OperacaoResponse);
+  rpc Download (CaminhoRequest) returns (FileDownloadResponse);
+  rpc CopiarInterno (CopyRequest) returns (OperacaoResponse);
+  rpc Deletar (CaminhoRequest) returns (OperacaoResponse);
+  
+  // Novas operações para chunks
+  rpc UploadChunk (ChunkUploadRequest) returns (OperacaoResponse);
+  rpc DownloadChunk (ChunkRequest) returns (ChunkDownloadResponse);
+  rpc DeleteChunk (ChunkRequest) returns (OperacaoResponse);
+  
+  // Operações de replicação
+  rpc ReplicarChunk (ReplicationRequest) returns (OperacaoResponse);
+  rpc SincronizarReplica (SyncRequest) returns (OperacaoResponse);
+  
+  // Heartbeat para detecção de falhas
+  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse);
+  
+  // Verificação de integridade
+  rpc VerificarIntegridade (IntegrityRequest) returns (IntegrityResponse);
+}
+
+// Serviço de Metadados - gerencia informações sobre arquivos, chunks e nós
+service MetadataService {
+  // Gerenciamento de arquivos
+  rpc RegistrarArquivo (FileMetadataRequest) returns (OperacaoResponse);
+  rpc ObterMetadataArquivo (CaminhoRequest) returns (FileMetadataResponse);
+  rpc RemoverArquivo (CaminhoRequest) returns (OperacaoResponse);
+  
+  // Gerenciamento de chunks
+  rpc RegistrarChunk (ChunkMetadataRequest) returns (OperacaoResponse);
+  rpc ObterLocalizacaoChunks (CaminhoRequest) returns (ChunkLocationResponse);
+  rpc RemoverChunk (ChunkRequest) returns (OperacaoResponse);
+  
+  // Gerenciamento de nós
+  rpc RegistrarNo (NodeRegistrationRequest) returns (NodeRegistrationResponse);
+  rpc ObterNosDisponiveis (NodesRequest) returns (NodesResponse);
+  rpc ReportarFalhaNo (NodeFailureRequest) returns (OperacaoResponse);
+  
+  // Operações de redirecionamento
+  rpc ObterNoParaOperacao (OperationRequest) returns (NodeResponse);
+  rpc ObterReplicasDisponiveis (ReplicaRequest) returns (ReplicaResponse);
+  
+  // Monitoramento e saúde
+  rpc ProcessarHeartbeat (HeartbeatData) returns (OperacaoResponse);
+  rpc ObterStatusSistema (StatusRequest) returns (StatusResponse);
+}
+
+// ========================================
+// MENSAGENS EXISTENTES (mantidas para compatibilidade)
+// ========================================
+
+// Representa uma requisição com um único caminho (para ls e delete)
+message CaminhoRequest {
+  string path = 1;
+}
+
+// Envio de arquivo (upload)
+message FileUploadRequest {
+  string path = 1;       // Caminho de destino no servidor
+  bytes dados = 2;       // Conteúdo do arquivo
+}
+
+// Resposta ao download de arquivo
+message FileDownloadResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  bytes dados = 3;
+}
+
+message CopyRequest {
+  string origem = 1;
+  string destino = 2;
+}
+
+// Resposta genérica para operações como copiar e deletar
+message OperacaoResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+}
+
+// Resposta para a listagem de diretórios ou arquivos
+message ConteudoResponse {
+  bool sucesso = 1;
+  string tipo = 2; // "arquivo" ou "diretorio"
+  repeated string conteudo = 3;
+  string mensagem = 4;
+}
+
+// ========================================
+// NOVAS MENSAGENS PARA CHUNKS
+// ========================================
+
+message ChunkUploadRequest {
+  string arquivo_nome = 1;     // Nome do arquivo original
+  int32 chunk_numero = 2;      // Número do chunk (0, 1, 2, ...)
+  bytes dados = 3;             // Dados do chunk
+  string checksum = 4;         // Hash para verificação de integridade
+  int64 tamanho_total = 5;     // Tamanho total do arquivo original
+  int32 total_chunks = 6;      // Total de chunks do arquivo
+}
+
+message ChunkRequest {
+  string arquivo_nome = 1;
+  int32 chunk_numero = 2;
+}
+
+message ChunkDownloadResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  bytes dados = 3;
+  string checksum = 4;
+}
+
+// ========================================
+// MENSAGENS PARA REPLICAÇÃO
+// ========================================
+
+message ReplicationRequest {
+  string arquivo_nome = 1;
+  int32 chunk_numero = 2;
+  bytes dados = 3;
+  string checksum = 4;
+  string no_origem = 5;        // Nó que está enviando a réplica
+  int64 timestamp = 6;         // Timestamp da operação
+}
+
+message SyncRequest {
+  string arquivo_nome = 1;
+  int32 chunk_numero = 2;
+  string checksum_esperado = 3;
+  int64 timestamp_esperado = 4;
+}
+
+// ========================================
+// MENSAGENS PARA HEARTBEAT E DETECÇÃO DE FALHAS
+// ========================================
+
+message HeartbeatRequest {
+  string node_id = 1;
+  int64 timestamp = 2;
+  NodeStatus status = 3;
+}
+
+message HeartbeatResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  int64 server_timestamp = 3;
+}
+
+message HeartbeatData {
+  string node_id = 1;
+  int64 timestamp = 2;
+  NodeStatus status = 3;
+  repeated string chunks_armazenados = 4;  // Lista de chunks que o nó possui
+}
+
+enum NodeStatus {
+  ATIVO = 0;
+  OCUPADO = 1;
+  MANUTENCAO = 2;
+  FALHA = 3;
+}
+
+// ========================================
+// MENSAGENS PARA VERIFICAÇÃO DE INTEGRIDADE
+// ========================================
+
+message IntegrityRequest {
+  string arquivo_nome = 1;
+  int32 chunk_numero = 2;
+}
+
+message IntegrityResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  string checksum_atual = 3;
+  int64 timestamp_modificacao = 4;
+  bool integridade_ok = 5;
+}
+
+// ========================================
+// MENSAGENS PARA METADADOS DE ARQUIVOS
+// ========================================
+
+message FileMetadataRequest {
+  string nome_arquivo = 1;
+  int64 tamanho_total = 2;
+  int32 total_chunks = 3;
+  string checksum_arquivo = 4;
+  int64 timestamp_criacao = 5;
+  string no_primario = 6;
+  repeated string nos_replicas = 7;
+}
+
+message FileMetadataResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  FileMetadata metadata = 3;
+}
+
+message FileMetadata {
+  string nome_arquivo = 1;
+  int64 tamanho_total = 2;
+  int32 total_chunks = 3;
+  string checksum_arquivo = 4;
+  int64 timestamp_criacao = 5;
+  int64 timestamp_modificacao = 6;
+  string no_primario = 7;
+  repeated string nos_replicas = 8;
+  bool esta_completo = 9;
+}
+
+// ========================================
+// MENSAGENS PARA METADADOS DE CHUNKS
+// ========================================
+
+message ChunkMetadataRequest {
+  string arquivo_nome = 1;
+  int32 chunk_numero = 2;
+  string no_primario = 3;
+  repeated string nos_replicas = 4;
+  string checksum = 5;
+  int64 tamanho_chunk = 6;
+  int64 timestamp_criacao = 7;
+}
+
+message ChunkLocationResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  repeated ChunkLocation chunks = 3;
+}
+
+message ChunkLocation {
+  int32 chunk_numero = 1;
+  string no_primario = 2;
+  repeated string nos_replicas = 3;
+  string checksum = 4;
+  int64 tamanho_chunk = 5;
+  bool disponivel = 6;
+}
+
+// ========================================
+// MENSAGENS PARA GERENCIAMENTO DE NÓS
+// ========================================
+
+message NodeRegistrationRequest {
+  string node_id = 1;
+  string endereco = 2;        // IP:porta do nó
+  int32 porta = 3;
+  int64 capacidade_storage = 4;  // Capacidade em bytes
+  repeated string tipos_suportados = 5;  // Tipos de operação suportados
+}
+
+message NodeRegistrationResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  string node_id_atribuido = 3;
+}
+
+message NodesRequest {
+  NodeStatus status_filtro = 1;  // Filtrar por status (opcional)
+  bool apenas_ativos = 2;
+}
+
+message NodesResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  repeated NodeInfo nos = 3;
+}
+
+message NodeInfo {
+  string node_id = 1;
+  string endereco = 2;
+  int32 porta = 3;
+  NodeStatus status = 4;
+  int64 capacidade_storage = 5;
+  int64 storage_usado = 6;
+  int64 ultimo_heartbeat = 7;
+  repeated string chunks_armazenados = 8;
+}
+
+message NodeFailureRequest {
+  string node_id = 1;
+  string motivo_falha = 2;
+  int64 timestamp_falha = 3;
+}
+
+// ========================================
+// MENSAGENS PARA OPERAÇÕES E REDIRECIONAMENTO
+// ========================================
+
+message OperationRequest {
+  string tipo_operacao = 1;    // "upload", "download", "delete"
+  string arquivo_nome = 2;
+  int32 chunk_numero = 3;      // -1 se for operação no arquivo inteiro
+  bool requer_replica = 4;     // Se true, retorna nós de réplica
+}
+
+message NodeResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  NodeInfo no_recomendado = 3;
+  repeated NodeInfo nos_alternativos = 4;
+}
+
+message ReplicaRequest {
+  string arquivo_nome = 1;
+  int32 chunk_numero = 2;
+  string no_primario_falho = 3;  // Nó que falhou (opcional)
+}
+
+message ReplicaResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  repeated NodeInfo replicas_disponiveis = 3;
+}
+
+// ========================================
+// MENSAGENS PARA MONITORAMENTO E STATUS
+// ========================================
+
+message StatusRequest {
+  bool incluir_detalhes_nos = 1;
+  bool incluir_estatisticas = 2;
+}
+
+message StatusResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  SystemStatus status_sistema = 3;
+}
+
+message SystemStatus {
+  int32 total_nos = 1;
+  int32 nos_ativos = 2;
+  int32 nos_falhos = 3;
+  int64 total_arquivos = 4;
+  int64 total_chunks = 5;
+  int64 storage_total = 6;
+  int64 storage_usado = 7;
+  repeated NodeInfo detalhes_nos = 8;
+  SystemStatistics estatisticas = 9;
+}
+
+message SystemStatistics {
+  int64 operacoes_upload_total = 1;
+  int64 operacoes_download_total = 2;
+  int64 operacoes_delete_total = 3;
+  int64 falhas_detectadas = 4;
+  int64 replicacoes_realizadas = 5;
+  double tempo_medio_upload = 6;
+  double tempo_medio_download = 7;
+}
+
