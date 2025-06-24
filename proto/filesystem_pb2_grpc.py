@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from proto import filesystem_pb2 as proto_dot_filesystem__pb2
+import filesystem_pb2 as proto_dot_filesystem__pb2
 
 GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__

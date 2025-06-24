@@ -257,7 +257,7 @@ class MetadataClient:
         try:
             # Converter status string para enum
             status_enum = getattr(fs_pb2.NodeStatus, status, fs_pb2.NodeStatus.ATIVO)
-            
+            print("Estou vivo")
             request = fs_pb2.HeartbeatData(
                 node_id=node_id,
                 timestamp=int(time.time()),
@@ -266,6 +266,8 @@ class MetadataClient:
             )
             
             response = self.stub.ProcessarHeartbeat(request)
+            if not response.sucesso:
+                print(f"Tentativa de comunicar com heartbeat: {response.mensagem}")
             return response.sucesso
         except Exception as e:
             print(f"Erro ao enviar heartbeat: {e}")
@@ -360,6 +362,7 @@ class HeartbeatSender:
         """Loop principal de envio de heartbeats"""
         while self.running:
             try:
+                
                 success = self.metadata_client.process_heartbeat(
                     self.node_id,
                     "ATIVO",

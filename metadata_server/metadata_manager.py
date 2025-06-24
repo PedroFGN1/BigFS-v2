@@ -322,6 +322,7 @@ class MetadataManager:
         try:
             with self.lock:
                 if node_id in self.nodes:
+                    print(f"Heartbeat recebido em process_heartbeat do nó {node_id} com status {status}")
                     node = self.nodes[node_id]
                     node.ultimo_heartbeat = int(time.time())
                     node.status = status

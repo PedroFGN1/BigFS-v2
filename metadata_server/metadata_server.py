@@ -337,9 +337,11 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
     def ProcessarHeartbeat(self, request, context):
         """Processa heartbeat de um nó"""
         try:
+            
+            status = fs_pb2.NodeStatus.Name(request.status)
             success = self.metadata_manager.process_heartbeat(
                 request.node_id,
-                request.status.name,
+                status,
                 list(request.chunks_armazenados)
             )
             

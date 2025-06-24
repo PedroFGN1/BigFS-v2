@@ -7,8 +7,8 @@ import threading
 from typing import Optional
 
 # Adiciona o diretório proto ao sys.path para importar os arquivos gerados
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', 'proto')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', 'metadata_server')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proto')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'metadata_server')))
 
 import filesystem_extended_pb2 as fs_pb2
 import filesystem_extended_pb2_grpc as fs_grpc
@@ -61,7 +61,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
             capacidade_storage = 10 * 1024 * 1024 * 1024  # 10GB padrão
             node_id_atribuido = self.metadata_client.register_node(
                 self.node_id,
-                "localhost",  # TODO: obter IP real
+                "localhost",  # obter IP real
                 self.node_port,
                 capacidade_storage
             )
@@ -138,6 +138,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                     sucesso=sucesso,
                     mensagem=mensagem
                 )
+
             
             # Arquivo grande - dividir em chunks
             chunks = dividir_arquivo_em_chunks(dados, self.chunk_size)
@@ -584,9 +585,15 @@ def serve(port=50051, node_id=None, metadata_server=DEFAULT_METADATA_SERVER,
     
     print("Conectando ao servidor...")
     time.sleep(1)
+
     print(f"Servidor rodando na porta {port} - " + time.strftime("%d-%m-%Y às %H:%M:%S"))
     print("Pressione Ctrl+C para parar o servidor.")
-    
+    try:
+        channel = grpc.insecure_channel("localhost:50052")
+        grpc.channel_ready_future(channel).result(timeout=3)
+        print("✅ Conectado ao metadata server!")
+    except Exception as e:
+        print("❌ Falha ao conectar:", e)
     try:
         while True:
             time.sleep(86400)

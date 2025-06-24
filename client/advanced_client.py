@@ -8,6 +8,7 @@ from typing import List, Optional, Dict, Tuple
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proto')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'metadata_server')))
 
+from client.client_extended import BigFSClient
 import filesystem_extended_pb2 as fs_pb2
 import filesystem_extended_pb2_grpc as fs_grpc
 from metadata_client import MetadataClient
