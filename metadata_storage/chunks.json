@@ -1,1 +1,362 @@
-{}
+{
+  "testvideo.mp4:0": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 0,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "940c438ee4c39f82bfc485007f5a5d59",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:1": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 1,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "985d10b7aa93950681a3552dda1a04c3",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:2": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 2,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "8ade37f38f69ec2005f9d310b6213367",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:3": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 3,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "54ecda4f4baa4d23ee2158473120c312",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:4": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 4,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "8f2f90cc035bc13174c1d041126ed88b",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:5": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 5,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "a79a00595e5bc64e6ed55d003d4e22e0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:6": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 6,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "869ab70e249e11409dea4a8e0d2afe0e",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:7": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 7,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "176b468b778987d78fc3f1773f7a1546",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:8": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 8,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "e03e0add1f78cbefe6d91dfc21432897",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:9": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 9,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "2a3a69fd7340d0c604387f8342dcdc00",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:10": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 10,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "c16372b1710add24eb7aa2dbee0982ce",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:11": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 11,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "1436c3bb3f4c6417f42229bc609957f2",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:12": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 12,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "1e8a66c816a4b65e0e167efe6c51f541",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:13": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 13,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "b58b26d6b6e06275c0e33e2aa6d3f538",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:14": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 14,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "b23bf57df4d0588fffa9b859f4b64ca4",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:15": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 15,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "730071695ecb4e736aa0ab1c0778fef1",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:16": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 16,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "bec00219bc1179f2edffccd18878d267",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:17": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 17,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "e4a98e7c410dbb4fc31187218c85950f",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:18": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 18,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "0ae27db8c09c0e182bdeac1cdcb8641f",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:19": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 19,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "5ae1506cd2f0d61a1b691871dd49ef28",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:20": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 20,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "8ebb16f864e0914432662f192b28c1d4",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:21": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 21,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "45316c24ad07988c9b40ef36ed2b4f53",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:22": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 22,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "7f2562eed65afda4033bb615f5a79c3e",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:23": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 23,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "3008b47bf62df9f14d4bc72d5cb69010",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864342,
+    "disponivel": true
+  },
+  "testvideo.mp4:24": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 24,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "0ac886bef2d96c9966e5d11c9a7d50e0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:25": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 25,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "fbbcebf2c47209d35d01b8b3e3b26cd5",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:26": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 26,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "9e99149a1d3cb12ffe1b7de8c50c0cb8",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:27": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 27,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "870cb838bfb83bea6098707cb58738f0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:28": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 28,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "56e47aef6a91d4c4cf33b1413d9c5d53",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:29": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 29,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "71d6c2156e74a693275fc9b0bf141e40",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:30": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 30,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "b50c4e10fe5f4a0f132461575ed8d1b2",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:31": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 31,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "58d833d44c4d9e410502d797948eabcc",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:32": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 32,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "8420526ee5cfe6bfe6efe785cab023e2",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:33": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 33,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "24589ccdcd27b5505a59ffa3a05ddaf3",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:34": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 34,
+    "no_primario": "node_2",
+    "nos_replicas": [],
+    "checksum": "9e84622d14c5051604af0d5c1aeac577",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  },
+  "testvideo.mp4:35": {
+    "arquivo_nome": "testvideo.mp4",
+    "chunk_numero": 35,
+    "no_primario": "node_3",
+    "nos_replicas": [],
+    "checksum": "08b11d447b8ac37d306c7a8999de34fa",
+    "tamanho_chunk": 526938,
+    "timestamp_criacao": 1750864343,
+    "disponivel": true
+  }
+}

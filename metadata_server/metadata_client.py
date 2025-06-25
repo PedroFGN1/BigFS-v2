@@ -176,18 +176,20 @@ class MetadataClient:
             response = self.stub.ObterNosDisponiveis(request)
             
             if response.sucesso:
+                
                 nodes = []
                 for node in response.nos:
                     nodes.append({
                         'node_id': node.node_id,
                         'endereco': node.endereco,
                         'porta': node.porta,
-                        'status': node.status.name,
+                        'status': node.status,
                         'capacidade_storage': node.capacidade_storage,
                         'storage_usado': node.storage_usado,
                         'ultimo_heartbeat': node.ultimo_heartbeat,
                         'chunks_armazenados': list(node.chunks_armazenados)
                     })
+                
                 return nodes
             else:
                 print(f"Erro ao obter nós: {response.mensagem}")
@@ -213,7 +215,7 @@ class MetadataClient:
                     'node_id': node.node_id,
                     'endereco': node.endereco,
                     'porta': node.porta,
-                    'status': node.status.name,
+                    'status': node.status,
                     'capacidade_storage': node.capacidade_storage,
                     'storage_usado': node.storage_usado
                 }
@@ -257,7 +259,7 @@ class MetadataClient:
         try:
             # Converter status string para enum
             status_enum = getattr(fs_pb2.NodeStatus, status, fs_pb2.NodeStatus.ATIVO)
-            print("Estou vivo")
+            
             request = fs_pb2.HeartbeatData(
                 node_id=node_id,
                 timestamp=int(time.time()),
@@ -301,7 +303,7 @@ class MetadataClient:
                             'node_id': node.node_id,
                             'endereco': node.endereco,
                             'porta': node.porta,
-                            'status': node.status.name,
+                            'status': node.status,
                             'capacidade_storage': node.capacidade_storage,
                             'storage_usado': node.storage_usado,
                             'ultimo_heartbeat': node.ultimo_heartbeat

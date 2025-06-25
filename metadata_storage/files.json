@@ -1,1 +1,13 @@
-{}
+{
+  "testvideo.mp4": {
+    "nome_arquivo": "testvideo.mp4",
+    "tamanho_total": 37227098,
+    "total_chunks": 36,
+    "checksum_arquivo": "a7ce8367fe19fe8f8efd196ee1b93647",
+    "timestamp_criacao": 1750864342,
+    "timestamp_modificacao": 1750864342,
+    "no_primario": "client_upload",
+    "nos_replicas": [],
+    "esta_completo": false
+  }
+}

@@ -74,7 +74,8 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 self.heartbeat_sender = HeartbeatSender(
                     self.metadata_client, 
                     self.node_id, 
-                    interval=15
+                    interval=15#,
+                    #chunks_callback=lambda: list(listar_chunks_armazenados(self.base_dir)) # Passar um callback
                 )
                 self.heartbeat_sender.start()
                 

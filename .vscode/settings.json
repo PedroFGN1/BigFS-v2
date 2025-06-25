@@ -1,6 +1,8 @@
 {
     "python.analysis.extraPaths": [
         "./proto",
-        "./metadata_server"
+        "./metadata_server",
+        "./client",
+        "./server",
     ]
 }
