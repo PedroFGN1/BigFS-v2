@@ -3,30 +3,30 @@
     "node_id": "node_1",
     "endereco": "localhost",
     "porta": 50051,
-    "status": "ATIVO",
+    "status": "FALHA",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1750868191,
+    "ultimo_heartbeat": 1750870712,
     "chunks_armazenados": []
   },
   "node_2": {
     "node_id": "node_2",
     "endereco": "localhost",
     "porta": 50053,
-    "status": "ATIVO",
+    "status": "FALHA",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1750868195,
+    "ultimo_heartbeat": 1750870715,
     "chunks_armazenados": []
   },
   "node_3": {
     "node_id": "node_3",
     "endereco": "localhost",
     "porta": 50054,
-    "status": "ATIVO",
+    "status": "FALHA",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1750868187,
+    "ultimo_heartbeat": 1750870723,
     "chunks_armazenados": []
   }
 }
