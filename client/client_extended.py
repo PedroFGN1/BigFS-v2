@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'm
 
 import filesystem_extended_pb2 as fs_pb2
 import filesystem_extended_pb2_grpc as fs_grpc
-from metadata_client import MetadataClient
+from metadata_client2 import MetadataClient
 
 class BigFSClient:
     """Cliente BigFS-v2 com suporte a chunks, replicação e tolerância a falhas"""
@@ -33,7 +33,7 @@ class BigFSClient:
     
     def _get_storage_connection(self, node_info: Dict) -> Optional[fs_grpc.FileSystemServiceStub]:
         """Obtém conexão com nó de armazenamento (com cache)"""
-        node_address = f"{node_info['endereco']}:{node_info['porta']}"
+        node_address = f"{node_info.endereco}:{node_info.porta}"
         
         if node_address not in self.storage_connections:
             try:
@@ -66,32 +66,12 @@ class BigFSClient:
                                     chunk_info: Dict) -> Optional[bytes]:
         """Download de chunk com fallback para réplicas em caso de falha"""
         # Tentar nó primário primeiro
-        primary_node = {
-            'endereco': 'localhost',  # Assumindo localhost por simplicidade
-            'porta': 50051  # Porta padrão, deveria vir dos metadados
-        }
+        primary_node = self.metadata_client.get_node_for_operation("download", arquivo_nome)
+        if not primary_node:
+            print(f"⚠️ Nenhum nó primário disponível para o arquivo {arquivo_nome}")
+            return None
         
         stub = self._get_storage_connection(primary_node)
-        if stub:
-            try:
-                request = fs_pb2.ChunkRequest(
-                    arquivo_nome=arquivo_nome,
-                    chunk_numero=chunk_numero
-                )
-                response = stub.DownloadChunk(request)
-                
-                if response.sucesso:
-                    # Verificar checksum
-                    import hashlib
-                    checksum_calculado = hashlib.md5(response.dados).hexdigest()
-                    if checksum_calculado == chunk_info['checksum']:
-                        return response.dados
-                    else:
-                        print(f"⚠️ Checksum inválido para chunk {chunk_numero}")
-                else:
-                    print(f"⚠️ Erro no download do chunk {chunk_numero}: {response.mensagem}")
-            except Exception as e:
-                print(f"⚠️ Falha na comunicação com nó primário: {e}")
         
         # Se chegou aqui, tentar réplicas
         if self.metadata_client:
@@ -109,11 +89,11 @@ class BigFSClient:
                         if response.sucesso:
                             import hashlib
                             checksum_calculado = hashlib.md5(response.dados).hexdigest()
-                            if checksum_calculado == chunk_info['checksum']:
-                                print(f"✅ Chunk {chunk_numero} obtido da réplica {replica['node_id']}")
+                            if checksum_calculado == chunk_info.checksum:
+                                print(f"✅ Chunk {chunk_numero} obtido da réplica {replica.node_id}")
                                 return response.dados
                 except Exception as e:
-                    print(f"⚠️ Falha na réplica {replica.get('node_id', 'unknown')}: {e}")
+                    print(f"⚠️ Falha na réplica {replica.node_id}: {e}")
                     continue
         
         print(f"❌ Não foi possível obter chunk {chunk_numero}")
@@ -141,7 +121,7 @@ class BigFSClient:
             
             if response.sucesso:
                 print(f"\n📁 Tipo: {response.tipo}")
-                print(f"📍 Localização: {node['node_id']} ({node['endereco']}:{node['porta']})")
+                print(f"📍 Localização: {node.node_id} ({node.endereco}:{node.porta})")
                 for item in response.conteudo:
                     print("  📄", item)
                 return True
@@ -180,7 +160,7 @@ class BigFSClient:
                 dados = f.read()
             
             tamanho_arquivo = len(dados)
-            print(f"📤 Enviando {arquivo_nome} ({tamanho_arquivo} bytes) para {node['node_id']}")
+            print(f"📤 Enviando {arquivo_nome} ({tamanho_arquivo} bytes) para {node.node_id}")
             
             # Fazer upload (o nó decidirá se divide em chunks)
             request = fs_pb2.FileUploadRequest(
@@ -214,7 +194,7 @@ class BigFSClient:
         
         if file_metadata:
             # Arquivo grande com chunks
-            print(f"📥 Baixando {arquivo_nome} ({file_metadata['tamanho_total']} bytes, {file_metadata['total_chunks']} chunks)")
+            print(f"📥 Baixando {arquivo_nome} ({file_metadata.tamanho_total} bytes, {file_metadata.total_chunks} chunks)")
             
             # Obter localização dos chunks
             chunks_info = self.metadata_client.get_chunk_locations(arquivo_nome)
@@ -224,8 +204,8 @@ class BigFSClient:
             
             # Download paralelo dos chunks (simplificado - sequencial por enquanto)
             chunks_dados = []
-            for chunk_info in sorted(chunks_info, key=lambda x: x['chunk_numero']):
-                chunk_numero = chunk_info['chunk_numero']
+            for chunk_info in sorted(chunks_info, key=lambda x: x.chunk_numero):
+                chunk_numero = chunk_info.chunk_numero
                 print(f"📦 Baixando chunk {chunk_numero + 1}/{len(chunks_info)}")
                 
                 chunk_data = self._download_chunk_with_fallback(arquivo_nome, chunk_numero, chunk_info)

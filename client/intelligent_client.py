@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'm
 
 import filesystem_extended_pb2 as fs_pb2
 import filesystem_extended_pb2_grpc as fs_grpc
-from metadata_client import MetadataClient
+from metadata_client2 import MetadataClient
 
 class RetryConfig:
     """Configuração para retry inteligente"""
@@ -107,19 +107,11 @@ class IntelligentChunkUploader:
                 )
             
             if response and hasattr(response, 'node_info') and response.node_info:
-                return {
-                    'node_id': response.node_info.node_id,
-                    'endereco': response.node_info.endereco,
-                    'porta': response.node_info.porta
-                }
+                return response.node_info
             elif response and hasattr(response, 'replicas') and response.replicas:
                 # Pegar primeira réplica disponível
                 replica = response.replicas[0]
-                return {
-                    'node_id': replica.node_id,
-                    'endereco': replica.endereco,
-                    'porta': replica.porta
-                }
+                return replica
             
             return None
             
@@ -152,9 +144,9 @@ class IntelligentChunkUploader:
                 
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.UNAVAILABLE:
-                return False, f"Nó {node_info['node_id']} indisponível"
+                return False, f"Nó {node_info.node_id} indisponível"
             elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
-                return False, f"Timeout no nó {node_info['node_id']}"
+                return False, f"Timeout no nó {node_info.node_id}"
             else:
                 return False, f"Erro gRPC: {e.details()}"
         except Exception as e:
@@ -238,19 +230,7 @@ class IntelligentChunkDownloader:
                 # Tentar réplicas em ordem, mas pular as que já falharam
                 if tentativa < len(response.replicas):
                     replica = response.replicas[tentativa]
-                    return {
-                        'node_id': replica.node_id,
-                        'endereco': replica.endereco,
-                        'porta': replica.porta
-                    }
-                else:
-                    # Se esgotaram as réplicas, tentar a primeira novamente
-                    replica = response.replicas[0]
-                    return {
-                        'node_id': replica.node_id,
-                        'endereco': replica.endereco,
-                        'porta': replica.porta
-                    }
+                    return replica
             
             return None
             
@@ -287,9 +267,9 @@ class IntelligentChunkDownloader:
                 
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.UNAVAILABLE:
-                return None, f"Nó {node_info['node_id']} indisponível"
+                return None, f"Nó {node_info.node_id} indisponível"
             elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
-                return None, f"Timeout no nó {node_info['node_id']}"
+                return None, f"Timeout no nó {node_info.node_id}"
             else:
                 return None, f"Erro gRPC: {e.details()}"
         except Exception as e:

@@ -19,7 +19,7 @@ from file_manager_extended import (
     salvar_chunk, ler_chunk, deletar_chunk, listar_chunks_armazenados,
     verificar_integridade_chunk, salvar_metadata_chunk, ler_metadata_chunk
 )
-from metadata_client import MetadataClient, HeartbeatSender
+from metadata_client2 import MetadataClient, HeartbeatSender
 
 # Configurações do nó
 DEFAULT_CHUNK_SIZE = 1024 * 1024  # 1MB
@@ -66,16 +66,16 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 capacidade_storage
             )
             
-            if node_id_atribuido:
-                self.node_id = node_id_atribuido
+            if node_id_atribuido.sucesso:
+                self.node_id = node_id_atribuido.node_id_atribuido
                 print(f"Nó registrado no servidor de metadados: {self.node_id}")
                 
                 # Iniciar heartbeat
                 self.heartbeat_sender = HeartbeatSender(
                     self.metadata_client, 
                     self.node_id, 
-                    interval=15#,
-                    #chunks_callback=lambda: list(listar_chunks_armazenados(self.base_dir)) # Passar um callback
+                    interval=15,
+                    chunks_callback=lambda: list(listar_chunks_armazenados(self.base_dir)) # Passar um callback
                 )
                 self.heartbeat_sender.start()
                 
@@ -159,8 +159,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                     []  # Réplicas serão adicionadas depois
                 )
                 
-                if not sucesso_registro:
-                    return fs_pb2.OperacaoResponse(
+                if not sucesso_registro.sucesso:                    return fs_pb2.OperacaoResponse(
                         sucesso=False,
                         mensagem="Erro ao registrar arquivo no servidor de metadados"
                     )
@@ -185,8 +184,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                             [],  # Réplicas serão adicionadas depois
                             checksum_chunk,
                             len(chunk_data)
-                        )
-                    
+                        ).sucesso
                     # Salvar metadados locais do chunk
                     metadata = {
                         'arquivo_nome': arquivo_nome,
@@ -240,13 +238,10 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 chunks_info = self.metadata_client.get_chunk_locations(arquivo_nome)
                 if chunks_info:
                     print(f"Recombinando {len(chunks_info)} chunks para {arquivo_nome}")
-                    
                     chunks_dados = []
-                    for chunk_info in sorted(chunks_info, key=lambda x: x['chunk_numero']):
-                        chunk_numero = chunk_info['chunk_numero']
-                        sucesso_chunk, _, dados_chunk = ler_chunk(
-                            self.base_dir, arquivo_nome, chunk_numero
-                        )
+                    for chunk_info in sorted(chunks_info, key=lambda x: x.chunk_numero):               
+                        chunk_numero = chunk_info.chunk_numero              
+                        sucesso_chunk, _, dados_chunk = ler_chunk(self.base_dir, arquivo_nome, chunk_numero)
                         
                         if sucesso_chunk:
                             chunks_dados.append(dados_chunk)
@@ -620,4 +615,3 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     serve(args.port, args.node_id, args.metadata_server, args.storage_dir, args.chunk_size)
-

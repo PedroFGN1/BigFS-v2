@@ -239,21 +239,64 @@ class MetadataClient:
             response = self.stub.ObterStatusSistema(request)
             
             if response.sucesso:
-                return {
-                    'total_nos': response.status.total_nos,
-                    'nos_ativos': response.status.nos_ativos,
-                    'nos_falhos': response.status.nos_falhos,
-                    'total_arquivos': response.status.total_arquivos,
-                    'total_chunks': response.status.total_chunks,
-                    'storage_total': response.status.storage_total,
-                    'storage_usado': response.status.storage_usado
-                }
+                return response.status
             else:
                 print(f"Erro ao obter status: {response.mensagem}")
                 return {}
         except Exception as e:
             print(f"Erro na comunicação ao obter status: {e}")
             return {}
+        
+    def register_node(self, node_id: str, endereco: str, porta: int, capacidade_storage: int) -> Optional[object]:
+        """Registra um novo nó de armazenamento no sistema"""
+        try:
+            request = fs_pb2.NodeRegistrationRequest(
+                node_id=node_id,
+                endereco=endereco,
+                porta=porta,
+                capacidade_storage=capacidade_storage
+            )
+            response = self.stub.RegistrarNo(request)
+            if response.sucesso:
+                return response
+            else:
+                print(f"Erro ao registrar nó: {response.mensagem}")
+                return None
+        except Exception as e:
+            print(f"Erro na comunicação ao registrar nó: {e}")
+            return None
+
+    def process_heartbeat(self, node_id: str, status: str, chunks_armazenados: list) -> bool:
+        """Processa o heartbeat de um nó"""
+        try:
+            request = fs_pb2.HeartbeatData(
+                node_id=node_id,
+                status=fs_pb2.NodeStatus.Value(status),
+                chunks_armazenados=chunks_armazenados,
+                timestamp=int(time.time())
+            )
+            response = self.stub.ProcessarHeartbeat(request)
+            if not response.sucesso:
+                print(f"Erro ao processar heartbeat: {response.mensagem}")
+            return response.sucesso
+        except Exception as e:
+            print(f"Erro na comunicação ao processar heartbeat: {e}")
+            return False
+
+    def get_file_info(self, nome_arquivo: str) -> Optional[object]:
+        """Obtém informações de um arquivo"""
+        try:
+            request = fs_pb2.CaminhoRequest(path=nome_arquivo)
+            response = self.stub.ObterMetadataArquivo(request)
+            
+            if response.sucesso:
+                return response.metadata
+            else:
+                print(f"Erro ao obter informações do arquivo: {response.mensagem}")
+                return None
+        except Exception as e:
+            print(f"Erro na comunicação ao obter informações do arquivo: {e}")
+            return None
 
 class HeartbeatSender:
     """Classe para envio automático de heartbeats"""
@@ -292,7 +335,7 @@ class HeartbeatSender:
                     chunks_armazenados = self.chunks_callback()
                 
                 # Enviar heartbeat
-                request = fs_pb2.HeartbeatRequest(
+                request = fs_pb2.HeartbeatData(
                     node_id=self.node_id,
                     status="ATIVO",
                     chunks_armazenados=chunks_armazenados,
@@ -310,3 +353,26 @@ class HeartbeatSender:
             # Aguardar próximo heartbeat
             time.sleep(self.interval)
 
+# Exemplo de uso
+if __name__ == "__main__":
+    # Teste básico do cliente
+    client = MetadataClient()
+    
+    try:
+        # Obter status do sistema
+        status = client.get_system_status()
+        if status:
+            print("Status do Sistema:")
+            print(f"  Nós ativos: {status['nos_ativos']}/{status['total_nos']}")
+            print(f"  Arquivos: {status['total_arquivos']}")
+            print(f"  Chunks: {status['total_chunks']}")
+            print(f"  Storage: {status['storage_usado']}/{status['storage_total']} bytes")
+        
+        # Obter nós disponíveis
+        nodes = client.get_available_nodes()
+        print(f"\nNós disponíveis: {len(nodes)}")
+        for node in nodes:
+            print(f"  {node['node_id']}: {node['endereco']}:{node['porta']} ({node['status']})")
+    
+    finally:
+        client.close()
