@@ -73,7 +73,7 @@ class BigFSClient:
             print(f"⚠️ Nenhum nó primário disponível para o arquivo {arquivo_nome}")
             return None
         
-        stub = self._get_storage_connection(primary_node)
+        stub = self._get_storage_connection(primary_node.no_recomendado)
         
         # Se chegou aqui, tentar réplicas
         if self.metadata_client:
@@ -446,10 +446,11 @@ def exibir_menu():
     print("🗂️  BigFS-v2 Client - Sistema de Arquivos Distribuído")
     print("="*50)
     print("1. 📋 Listar arquivos (ls)")
-    print("2. 🗑️  Deletar arquivo")
+    print("2. 🗑️ Deletar arquivo")
     print("3. 📤 Upload de arquivo")
     print("4. 📥 Download de arquivo")
     print("5. 📋 Copiar arquivo remoto")
+    print("6. 📊 Status do sistema")
     print("7. 🔍 Verificar integridade de arquivo")
     print("8. 🚪 Sair")
     print("="*50)

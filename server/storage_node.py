@@ -47,6 +47,10 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
         # Conectar ao servidor de metadados
         self._connect_to_metadata_server()
         
+        if self.heartbeat_sender:
+            initial_chunks = set(listar_chunks_armazenados(self.base_dir))
+            self.heartbeat_sender.update_chunks(initial_chunks)
+
         print(f"Nó de armazenamento {node_id} iniciado")
         print(f"Diretório base: {base_dir}")
         print(f"Porta: {node_port}")
@@ -74,8 +78,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 self.heartbeat_sender = HeartbeatSender(
                     self.metadata_client, 
                     self.node_id, 
-                    interval=15,
-                    chunks_callback=lambda: list(listar_chunks_armazenados(self.base_dir)) # Passar um callback
+                    interval=15
                 )
                 self.heartbeat_sender.start()
                 
@@ -352,8 +355,8 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 
                 # Atualizar heartbeat
                 if self.heartbeat_sender:
-                    chunks_atuais = listar_chunks_armazenados(self.base_dir)
-                    self.heartbeat_sender.update_chunks(set(chunks_atuais))
+                    chunks_atuais = set(listar_chunks_armazenados(self.base_dir))
+                    self.heartbeat_sender.update_chunks(chunks_atuais)
             
             return fs_pb2.OperacaoResponse(
                 sucesso=sucesso,
@@ -463,8 +466,8 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 
                 # Atualizar heartbeat
                 if self.heartbeat_sender:
-                    chunks_atuais = listar_chunks_armazenados(self.base_dir)
-                    self.heartbeat_sender.update_chunks(set(chunks_atuais))
+                    chunks_atuais = set(listar_chunks_armazenados(self.base_dir))
+                    self.heartbeat_sender.update_chunks(chunks_atuais)
                 
                 print(f"Réplica do chunk {request.arquivo_nome}:{request.chunk_numero} recebida de {request.no_origem}")
             

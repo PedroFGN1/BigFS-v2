@@ -368,64 +368,63 @@ class MetadataClient:
             return None
 
 class HeartbeatSender:
-    """Classe para envio automático de heartbeats"""
+    """Classe para envio de heartbeats periódicos ao servidor de metadados"""
     
     def __init__(self, metadata_client: MetadataClient, node_id: str, 
-                 interval: int = 15, chunks_callback=None):
+                 interval: int = 15):
         self.metadata_client = metadata_client
         self.node_id = node_id
         self.interval = interval
-        self.chunks_callback = chunks_callback
         self.running = False
         self.thread = None
-    
+        # Esta lista em memória é a fonte da verdade para o heartbeat.
+        self.chunks_armazenados = set()
+        self.lock = threading.Lock() # Lock para proteger o acesso ao set
+
     def start(self):
-        """Inicia envio de heartbeats"""
+        """Inicia o envio de heartbeats"""
         if not self.running:
             self.running = True
             self.thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
             self.thread.start()
-            print(f"Heartbeats iniciados para nó {self.node_id}")
-    
+            print(f"Heartbeats iniciados para nó {self.node_id} (intervalo: {self.interval}s)")
+
     def stop(self):
-        """Para envio de heartbeats"""
+        """Para o envio de heartbeats"""
         self.running = False
         if self.thread:
             self.thread.join()
         print(f"Heartbeats parados para nó {self.node_id}")
-    
-    def _heartbeat_loop(self):
-        """Loop principal de heartbeats"""
-        while self.running:
-            try:
-                # Obter lista de chunks se callback fornecido
-                chunks_armazenados = []
-                if self.chunks_callback:
-                    chunks_armazenados = self.chunks_callback()
-                
-                # Enviar heartbeat
-                request = fs_pb2.HeartbeatData(
-                    node_id=self.node_id,
-                    status="ATIVO",
-                    chunks_armazenados=chunks_armazenados,
-                    timestamp=int(time.time())
-                )
-                
-                response = self.metadata_client.stub.ProcessarHeartbeat(request)
-                
-                if not response.sucesso:
-                    print(f"Erro no heartbeat: {response.mensagem}")
-                    
-            except Exception as e:
-                print(f"Erro ao enviar heartbeat: {e}")
-            
-            # Aguardar próximo heartbeat
-            time.sleep(self.interval)
 
     def update_chunks(self, chunks: set):
-        """Atualiza a lista de chunks armazenados"""
-        self.chunks_armazenados = chunks.copy()
+        """Atualiza a lista de chunks armazenados de forma segura."""
+        with self.lock:
+            self.chunks_armazenados = chunks.copy()
+            print(f"INFO: Lista de chunks do Heartbeat para o nó {self.node_id} foi atualizada. Total: {len(self.chunks_armazenados)}")
 
+    def _heartbeat_loop(self):
+        """Loop principal de envio de heartbeats"""
+        while self.running:
+            try:
+                # Envia a lista de chunks que está em memória
+                with self.lock:
+                    chunks_para_enviar = list(self.chunks_armazenados)
+
+                success = self.metadata_client.process_heartbeat(
+                    self.node_id,
+                    "ATIVO",
+                    chunks_para_enviar
+                )
+                
+                if not success:
+                    print(f"Falha ao enviar heartbeat para {self.node_id}")
+                
+                time.sleep(self.interval)
+            except Exception as e:
+                print(f"Erro no heartbeat para {self.node_id}: {e}")
+                # Aguarda o intervalo mesmo em caso de erro para não sobrecarregar
+                time.sleep(self.interval)
+                
 # Exemplo de uso
 if __name__ == "__main__":
     # Teste básico do cliente
