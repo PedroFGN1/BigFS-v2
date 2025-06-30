@@ -168,7 +168,8 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 chunks = dividir_arquivo_em_chunks(dados, self.chunk_size)
                 total_chunks = len(chunks)
                 checksum_arquivo = calcular_checksum(dados)
-                
+                tamanho_arquivo = len(dados)
+
                 print(f"Dividindo arquivo em {total_chunks} chunks")
                 
                 # Registrar arquivo no servidor de metadados
