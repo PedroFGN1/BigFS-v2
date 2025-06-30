@@ -337,6 +337,25 @@ class MetadataClient:
             print(f"Erro na comunicação ao obter informações do arquivo: {e}")
             return None
 
+    def get_chunk_info(self, arquivo_nome: str, chunk_numero: int) -> Optional[fs_pb2.ChunkLocation]:
+        """Busca os metadados de um único chunk do servidor."""
+        try:
+            request = fs_pb2.ChunkRequest(
+                arquivo_nome=arquivo_nome,
+                chunk_numero=chunk_numero
+            )
+            response = self.stub.GetChunkInfo(request)
+
+            if response.sucesso:
+                return response.metadata # Retorna o objeto ChunkLocation
+            else:
+                print(f"AVISO: Não foi possível obter informações para o chunk {arquivo_nome}:{chunk_numero}. Mensagem: {response.mensagem}")
+                return None
+        except Exception as e:
+            print(f"Erro de comunicação ao buscar informações do chunk: {e}")
+            return None
+
+
 class HeartbeatSender:
     """Classe para envio automático de heartbeats"""
     

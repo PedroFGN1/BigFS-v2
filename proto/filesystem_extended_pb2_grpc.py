@@ -682,6 +682,11 @@ class MetadataServiceStub(object):
                 request_serializer=proto_dot_filesystem__extended__pb2.ChunkRequest.SerializeToString,
                 response_deserializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
                 _registered_method=True)
+        self.GetChunkInfo = channel.unary_unary(
+                '/filesystem.MetadataService/GetChunkInfo',
+                request_serializer=proto_dot_filesystem__extended__pb2.ChunkRequest.SerializeToString,
+                response_deserializer=proto_dot_filesystem__extended__pb2.ChunkMetadataResponse.FromString,
+                _registered_method=True)
         self.RegistrarNo = channel.unary_unary(
                 '/filesystem.MetadataService/RegistrarNo',
                 request_serializer=proto_dot_filesystem__extended__pb2.NodeRegistrationRequest.SerializeToString,
@@ -768,6 +773,12 @@ class MetadataServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def RemoverChunk(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetChunkInfo(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -860,6 +871,11 @@ def add_MetadataServiceServicer_to_server(servicer, server):
                     servicer.RemoverChunk,
                     request_deserializer=proto_dot_filesystem__extended__pb2.ChunkRequest.FromString,
                     response_serializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.SerializeToString,
+            ),
+            'GetChunkInfo': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetChunkInfo,
+                    request_deserializer=proto_dot_filesystem__extended__pb2.ChunkRequest.FromString,
+                    response_serializer=proto_dot_filesystem__extended__pb2.ChunkMetadataResponse.SerializeToString,
             ),
             'RegistrarNo': grpc.unary_unary_rpc_method_handler(
                     servicer.RegistrarNo,
@@ -1114,6 +1130,33 @@ class MetadataService(object):
             '/filesystem.MetadataService/RemoverChunk',
             proto_dot_filesystem__extended__pb2.ChunkRequest.SerializeToString,
             proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetChunkInfo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filesystem.MetadataService/GetChunkInfo',
+            proto_dot_filesystem__extended__pb2.ChunkRequest.SerializeToString,
+            proto_dot_filesystem__extended__pb2.ChunkMetadataResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -5,8 +5,8 @@
     "porta": 50051,
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
-    "storage_usado": 37227100,
-    "ultimo_heartbeat": 1751294729,
+    "storage_usado": 0,
+    "ultimo_heartbeat": 1751310131,
     "chunks_armazenados": []
   },
   "node_2": {
@@ -15,8 +15,8 @@
     "porta": 50053,
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
-    "storage_usado": 37227098,
-    "ultimo_heartbeat": 1751294726,
+    "storage_usado": 0,
+    "ultimo_heartbeat": 1751310146,
     "chunks_armazenados": []
   }
 }

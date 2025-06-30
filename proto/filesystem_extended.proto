@@ -44,6 +44,7 @@ service MetadataService {
   rpc RegistrarChunk (ChunkMetadataRequest) returns (OperacaoResponse);
   rpc ObterLocalizacaoChunks (CaminhoRequest) returns (ChunkLocationResponse);
   rpc RemoverChunk (ChunkRequest) returns (OperacaoResponse);
+  rpc GetChunkInfo (ChunkRequest) returns (ChunkMetadataResponse);
   
   // Gerenciamento de nós
   rpc RegistrarNo (NodeRegistrationRequest) returns (NodeRegistrationResponse);
@@ -242,6 +243,12 @@ message ChunkLocationResponse {
   bool sucesso = 1;
   string mensagem = 2;
   repeated ChunkLocation chunks = 3;
+}
+
+message ChunkMetadataResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  ChunkLocation metadata = 3;
 }
 
 message ChunkLocation {

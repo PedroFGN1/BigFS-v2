@@ -528,37 +528,42 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
         )
     
     def VerificarIntegridade(self, request, context):
-        """Verifica integridade de um chunk"""
+        """
+        Verifica a integridade de um chunk, buscando o checksum esperado
+        diretamente do servidor de metadados.
+        """
         try:
-            # Ler metadados locais
-            metadata = ler_metadata_chunk(
+            # 1. Obter o checksum esperado DO SERVIDOR DE METADADOS.
+            if not self.metadata_client:
+                return fs_pb2.IntegrityResponse(sucesso=False, mensagem="Erro: Nó não conectado ao servidor de metadados.")
+
+            # Esta chamada pressupõe que o metadata_client tenha um método para buscar info de um único chunk.
+            chunk_info = self.metadata_client.get_chunk_info(request.arquivo_nome, request.chunk_numero)
+            
+            if not chunk_info:
+                return fs_pb2.IntegrityResponse(sucesso=False, mensagem="Não foi possível obter os metadados do chunk do servidor.")
+
+            checksum_esperado = chunk_info.checksum
+
+            # 2. Ler os dados do chunk localmente.
+            sucesso, mensagem, dados_chunk = ler_chunk(
                 self.base_dir,
                 request.arquivo_nome,
                 request.chunk_numero
             )
+            if not sucesso:
+                return fs_pb2.IntegrityResponse(sucesso=False, mensagem=mensagem, integridade_ok=False)
+
+            # 3. Calcular o checksum atual e comparar.
+            checksum_atual = calcular_checksum(dados_chunk)
+            integridade_ok = (checksum_atual == checksum_esperado)
             
-            if not metadata:
-                return fs_pb2.IntegrityResponse(
-                    sucesso=False,
-                    mensagem="Metadados do chunk não encontrados",
-                    checksum_atual="",
-                    timestamp_modificacao=0,
-                    integridade_ok=False
-                )
-            
-            # Verificar integridade
-            sucesso, mensagem, integridade_ok = verificar_integridade_chunk(
-                self.base_dir,
-                request.arquivo_nome,
-                request.chunk_numero,
-                metadata['checksum']
-            )
+            msg_final = "Integridade OK." if integridade_ok else f"Checksum não confere! Esperado: {checksum_esperado}, Atual: {checksum_atual}"
             
             return fs_pb2.IntegrityResponse(
-                sucesso=sucesso,
-                mensagem=mensagem,
-                checksum_atual=metadata['checksum'],
-                timestamp_modificacao=metadata['timestamp'],
+                sucesso=True,
+                mensagem=msg_final,
+                checksum_atual=checksum_atual,
                 integridade_ok=integridade_ok
             )
             

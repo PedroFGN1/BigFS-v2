@@ -438,6 +438,33 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
         except Exception as e:
             return fs_pb2.OperacaoResponse(sucesso=False, mensagem=f"Erro interno: {str(e)}")
 
+    def GetChunkInfo(self, request, context):
+        """Implementação da RPC para buscar metadados de um único chunk."""
+        try:
+            chunk_metadata = self.metadata_manager.get_chunk_metadata(
+                request.arquivo_nome,
+                request.chunk_numero
+            )
+            
+            if chunk_metadata:
+                # Converte o objeto ChunkMetadata do dataclass para o objeto ChunkLocation do protobuf
+                chunk_location_pb = fs_pb2.ChunkLocation(
+                    chunk_numero=chunk_metadata.chunk_numero,
+                    no_primario=chunk_metadata.no_primario,
+                    nos_replicas=chunk_metadata.nos_replicas,
+                    checksum=chunk_metadata.checksum,
+                    tamanho_chunk=chunk_metadata.tamanho_chunk,
+                    disponivel=chunk_metadata.disponivel
+                )
+                return fs_pb2.ChunkMetadataResponse(
+                    sucesso=True,
+                    mensagem="Metadados do chunk encontrados.",
+                    metadata=chunk_location_pb
+                )
+            else:
+                return fs_pb2.ChunkMetadataResponse(sucesso=False, mensagem="Chunk não encontrado.")
+        except Exception as e:
+            return fs_pb2.ChunkMetadataResponse(sucesso=False, mensagem=f"Erro interno: {str(e)}")
 
 def serve(port=50052, data_dir="metadata_storage"):
     """Inicia o servidor de metadados"""

@@ -234,6 +234,11 @@ class MetadataManager:
                 
                 # 1. Encontrar todos os chunks e suas localizações ANTES de apagar os metadados.
                 chunks_to_remove = self.get_chunk_locations(nome_arquivo)
+                if not chunks_to_remove:
+                    print(f"AVISO: Nenhum chunk encontrado para o arquivo '{nome_arquivo}'.")
+                    return False
+                
+                nodes_afetados = set() # Usamos um set para evitar recalcular para o mesmo nó várias vezes
 
                 # 2. Comandar a exclusão dos chunks nos nós de armazenamento.
                 for chunk_metadata in chunks_to_remove:
@@ -257,9 +262,19 @@ class MetadataManager:
                 for key in chunk_keys_to_delete:
                     if key in self.chunks:
                         del self.chunks[key]
-                
+
                 del self.files[nome_arquivo]
                 
+                # Atualiza o storage_usado para cada nó afetado pela exclusão.
+                for node_id in nodes_afetados:
+                    if node_id in self.nodes:
+                        # Recalcula do zero para garantir consistência
+                        new_storage = 0
+                        for chunk_key in self.nodes[node_id].chunks_armazenados:
+                             if chunk_key in self.chunks:
+                                 new_storage += self.chunks[chunk_key].tamanho_chunk
+                        self.nodes[node_id].storage_usado = new_storage
+
                 self._save_metadata()
                 self.stats['operacoes_delete_total'] += 1
                 print(f"INFO: Metadados para '{nome_arquivo}' removidos com sucesso.")
@@ -350,7 +365,29 @@ class MetadataManager:
                     node = self.nodes[node_id]
                     node.ultimo_heartbeat = int(time.time())
                     node.status = status
-                    node.chunks_armazenados = set(chunks_armazenados)
+                    # A lista de chunks do nó é a VERDADE. Atualizamos a lista do nó diretamente.
+                    chunks_reais = set(chunks_armazenados)
+                    if node.chunks_armazenados != chunks_reais:
+                        print(f"INFO: Reconciliando estado do nó {node_id} via heartbeat.")
+                        node.chunks_armazenados = chunks_reais
+
+                        # Recalcula o espaço utilizado com base nos chunks que o nó reportou ter.
+                        storage_recalculado = 0
+                        for chunk_key in node.chunks_armazenados:
+                            # Verificamos se o chunk é conhecido pelo servidor de metadados.
+                            # Se não for, é um "chunk órfão" que precisa ser investigado.
+                            if chunk_key in self.chunks:
+                                storage_recalculado += self.chunks[chunk_key].tamanho_chunk
+                            else:
+                                # chunk órfão!
+                                print(f"AVISO: Nó {node_id} reportou um chunk ('{chunk_key}') que é desconhecido pelo servidor de metadados. Pode ser de um upload incompleto.")
+                        
+                        # Atualiza o storage usado do nó com o valor recalculado
+                        node.storage_usado = storage_recalculado
+
+                        # Salva os metadados no disco para refletir a mudança imediatamente.
+                        self._save_metadata()
+                    
                     return True
                 return False
         except Exception as e:
@@ -463,3 +500,13 @@ class MetadataManager:
         except Exception as e:
             print(f"ERRO: Exceção ao marcar arquivo como completo: {e}")
             return False
+        
+    def get_chunk_metadata_by_key(self, chunk_key: str) -> Optional[ChunkMetadata]:
+        """Busca os metadados de um chunk pela sua chave ('arquivo:numero')."""
+        with self.lock:
+            return self.chunks.get(chunk_key)
+
+    def get_chunk_metadata(self, arquivo_nome: str, chunk_numero: int) -> Optional[ChunkMetadata]:
+        """Busca os metadados de um chunk específico."""
+        chunk_key = self._get_chunk_key(arquivo_nome, chunk_numero)
+        return self.get_chunk_metadata_by_key(chunk_key)
