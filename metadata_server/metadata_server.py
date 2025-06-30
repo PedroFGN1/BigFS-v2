@@ -18,6 +18,22 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
         self.metadata_manager = MetadataManager(data_dir)
         print(f"Servidor de Metadados iniciado. Dados em: {data_dir}")
     
+    def ListarArquivos(self, request, context):
+        """Implementação da RPC para listar arquivos globalmente."""
+        try:
+            # Por enquanto, ignora o request.path e lista tudo da raiz
+            nomes_arquivos = self.metadata_manager.list_files_in_directory(request.path)
+            return fs_pb2.FileListResponse(
+                sucesso=True,
+                mensagem="Arquivos listados com sucesso.",
+                nomes_arquivos=nomes_arquivos
+            )
+        except Exception as e:
+            return fs_pb2.FileListResponse(
+                sucesso=False,
+                mensagem=f"Erro interno ao listar arquivos: {str(e)}"
+            )
+
     def RegistrarArquivo(self, request, context):
         """Registra metadados de um novo arquivo"""
         try:

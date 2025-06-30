@@ -31,8 +31,10 @@ class BigFSClient:
             print(f"❌ Erro ao conectar com servidor de metadados: {e}")
             self.metadata_client = None
     
-    def _get_storage_connection(self, node_info: Dict) -> Optional[fs_grpc.FileSystemServiceStub]:
+    def _get_storage_connection(self, node_info: fs_pb2.NodeInfo) -> Optional[fs_grpc.FileSystemServiceStub]:
         """Obtém conexão com nó de armazenamento (com cache)"""
+        if not node_info:
+            return None
         node_address = f"{node_info.endereco}:{node_info.porta}"
         
         if node_address not in self.storage_connections:
@@ -63,7 +65,7 @@ class BigFSClient:
             self.metadata_client.close()
     
     def _download_chunk_with_fallback(self, arquivo_nome: str, chunk_numero: int, 
-                                    chunk_info: Dict) -> Optional[bytes]:
+                                    chunk_info: fs_pb2.ChunkLocation) -> Optional[bytes]:
         """Download de chunk com fallback para réplicas em caso de falha"""
         # Tentar nó primário primeiro
         primary_node = self.metadata_client.get_node_for_operation("download", arquivo_nome)
@@ -99,34 +101,27 @@ class BigFSClient:
         print(f"❌ Não foi possível obter chunk {chunk_numero}")
         return None
     
-    def listar(self, caminho: str = "") -> bool:
+    def listar(self, caminho: str = "/") -> bool:
         """Lista conteúdo de diretório"""
         if not self.metadata_client:
             print("❌ Servidor de metadados não disponível")
             return False
         
-        # Obter nó para operação de listagem
-        node = self.metadata_client.get_node_for_operation("list", caminho)
-        if not node:
-            print("❌ Nenhum nó disponível para listagem")
-            return False
-        
-        stub = self._get_storage_connection(node)
-        if not stub:
-            return False
+        print(f"\n📁 Listando conteúdo de: '{caminho}' (visão global)")
         
         try:
-            request = fs_pb2.CaminhoRequest(path=caminho)
-            response = stub.Listar(request)
-            
-            if response.sucesso:
-                print(f"\n📁 Tipo: {response.tipo}")
-                print(f"📍 Localização: {node.node_id} ({node.endereco}:{node.porta})")
-                for item in response.conteudo:
-                    print("  📄", item)
+            # Chama a nova função que consulta o metadata server
+            nomes_arquivos = self.metadata_client.list_files(caminho)
+        
+            if nomes_arquivos is not None:
+                if not nomes_arquivos:
+                    print("  (Diretório vazio)")
+                else:
+                    for item in nomes_arquivos:
+                        print("  📄", item)
                 return True
             else:
-                print("❌ Erro:", response.mensagem)
+                # A mensagem de erro já foi impressa por list_files_globally
                 return False
         except Exception as e:
             print(f"❌ Erro na comunicação: {e}")
@@ -145,12 +140,15 @@ class BigFSClient:
         arquivo_nome = os.path.basename(caminho_remoto)
         
         # Obter nó para upload
-        node = self.metadata_client.get_node_for_operation("upload", arquivo_nome)
-        if not node:
+        node_response = self.metadata_client.get_node_for_operation("upload", arquivo_nome)
+        if not node_response and node_response.sucesso:
             print("❌ Nenhum nó disponível para upload")
             return False
         
-        stub = self._get_storage_connection(node)
+        node_info = node_response.no_recomendado
+
+        stub = self._get_storage_connection(node_info)
+
         if not stub:
             return False
         
@@ -160,7 +158,7 @@ class BigFSClient:
                 dados = f.read()
             
             tamanho_arquivo = len(dados)
-            print(f"📤 Enviando {arquivo_nome} ({tamanho_arquivo} bytes) para {node.node_id}")
+            print(f"📤 Enviando {arquivo_nome} ({tamanho_arquivo} bytes) para {node_info.node_id}")
             
             # Fazer upload (o nó decidirá se divide em chunks)
             request = fs_pb2.FileUploadRequest(
@@ -228,12 +226,14 @@ class BigFSClient:
             
         else:
             # Tentar download direto (arquivo pequeno ou não encontrado nos metadados)
-            node = self.metadata_client.get_node_for_operation("download", arquivo_nome)
-            if not node:
+            node_response = self.metadata_client.get_node_for_operation("download", arquivo_nome)
+            if not node_response and node_response.sucesso:
                 print("❌ Nenhum nó disponível para download")
                 return False
             
-            stub = self._get_storage_connection(node)
+            node_info = node_response.no_recomendado
+
+            stub = self._get_storage_connection(node_info)
             if not stub:
                 return False
             
@@ -246,7 +246,7 @@ class BigFSClient:
                     return False
                 
                 dados_completos = response.dados
-                print(f"📥 Baixando {arquivo_nome} ({len(dados_completos)} bytes) de {node['node_id']}")
+                print(f"📥 Baixando {arquivo_nome} ({len(dados_completos)} bytes) de {node_info['node_id']}")
                 
             except Exception as e:
                 print(f"❌ Erro na comunicação: {e}")

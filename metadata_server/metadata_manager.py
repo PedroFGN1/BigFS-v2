@@ -416,3 +416,9 @@ class MetadataManager:
         # Método placeholder para compatibilidade com testes
         pass
 
+    def list_files_in_directory(self, directory: str) -> List[str]:
+            """Retorna uma lista de todos os arquivos registrados no sistema."""
+            with self.lock:
+                # Por enquanto retorna todos os arquivos.
+                # Melhoria futura - filtrar pelo 'directory'.
+                return list(self.files.keys())

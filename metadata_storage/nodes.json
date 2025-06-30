@@ -1,82 +1,22 @@
 {
-  "node_1": {
-    "node_id": "node_1",
+  "node_50051_1751238859": {
+    "node_id": "node_50051_1751238859",
     "endereco": "localhost",
     "porta": 50051,
     "status": "FALHA",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1750870712,
+    "ultimo_heartbeat": 1751238859,
     "chunks_armazenados": []
   },
-  "node_2": {
-    "node_id": "node_2",
-    "endereco": "localhost",
-    "porta": 50053,
-    "status": "FALHA",
-    "capacidade_storage": 10737418240,
-    "storage_usado": 0,
-    "ultimo_heartbeat": 1750870715,
-    "chunks_armazenados": []
-  },
-  "node_3": {
-    "node_id": "node_3",
-    "endereco": "localhost",
-    "porta": 50054,
-    "status": "FALHA",
-    "capacidade_storage": 10737418240,
-    "storage_usado": 0,
-    "ultimo_heartbeat": 1750870723,
-    "chunks_armazenados": []
-  },
-  "node_50051_1751167940": {
-    "node_id": "node_50051_1751167940",
+  "node_50051_1751246598": {
+    "node_id": "node_50051_1751246598",
     "endereco": "localhost",
     "porta": 50051,
-    "status": "FALHA",
+    "status": "ATIVO",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751167940,
-    "chunks_armazenados": []
-  },
-  "node_50051_1751167962": {
-    "node_id": "node_50051_1751167962",
-    "endereco": "localhost",
-    "porta": 50051,
-    "status": "FALHA",
-    "capacidade_storage": 10737418240,
-    "storage_usado": 0,
-    "ultimo_heartbeat": 1751167962,
-    "chunks_armazenados": []
-  },
-  "node_50051_1751168126": {
-    "node_id": "node_50051_1751168126",
-    "endereco": "localhost",
-    "porta": 50051,
-    "status": "FALHA",
-    "capacidade_storage": 10737418240,
-    "storage_usado": 0,
-    "ultimo_heartbeat": 1751168126,
-    "chunks_armazenados": []
-  },
-  "node_50051_1751170652": {
-    "node_id": "node_50051_1751170652",
-    "endereco": "localhost",
-    "porta": 50051,
-    "status": "FALHA",
-    "capacidade_storage": 10737418240,
-    "storage_usado": 0,
-    "ultimo_heartbeat": 1751170652,
-    "chunks_armazenados": []
-  },
-  "node_50051_1751171264": {
-    "node_id": "node_50051_1751171264",
-    "endereco": "localhost",
-    "porta": 50051,
-    "status": "FALHA",
-    "capacidade_storage": 10737418240,
-    "storage_usado": 0,
-    "ultimo_heartbeat": 1751171594,
+    "ultimo_heartbeat": 1751246598,
     "chunks_armazenados": []
   }
 }

@@ -642,6 +642,11 @@ class MetadataServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
+        self.ListarArquivos = channel.unary_unary(
+                '/filesystem.MetadataService/ListarArquivos',
+                request_serializer=proto_dot_filesystem__extended__pb2.CaminhoRequest.SerializeToString,
+                response_deserializer=proto_dot_filesystem__extended__pb2.FileListResponse.FromString,
+                _registered_method=True)
         self.RegistrarArquivo = channel.unary_unary(
                 '/filesystem.MetadataService/RegistrarArquivo',
                 request_serializer=proto_dot_filesystem__extended__pb2.FileMetadataRequest.SerializeToString,
@@ -713,9 +718,16 @@ class MetadataServiceServicer(object):
     """Serviço de Metadados - gerencia informações sobre arquivos, chunks e nós
     """
 
-    def RegistrarArquivo(self, request, context):
+    def ListarArquivos(self, request, context):
         """Gerenciamento de arquivos
+        NOVA RPC PARA LISTAGEM GLOBAL
         """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RegistrarArquivo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -799,6 +811,11 @@ class MetadataServiceServicer(object):
 
 def add_MetadataServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
+            'ListarArquivos': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListarArquivos,
+                    request_deserializer=proto_dot_filesystem__extended__pb2.CaminhoRequest.FromString,
+                    response_serializer=proto_dot_filesystem__extended__pb2.FileListResponse.SerializeToString,
+            ),
             'RegistrarArquivo': grpc.unary_unary_rpc_method_handler(
                     servicer.RegistrarArquivo,
                     request_deserializer=proto_dot_filesystem__extended__pb2.FileMetadataRequest.FromString,
@@ -875,6 +892,33 @@ def add_MetadataServiceServicer_to_server(servicer, server):
 class MetadataService(object):
     """Serviço de Metadados - gerencia informações sobre arquivos, chunks e nós
     """
+
+    @staticmethod
+    def ListarArquivos(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filesystem.MetadataService/ListarArquivos',
+            proto_dot_filesystem__extended__pb2.CaminhoRequest.SerializeToString,
+            proto_dot_filesystem__extended__pb2.FileListResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def RegistrarArquivo(request,

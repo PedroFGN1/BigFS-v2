@@ -92,7 +92,7 @@ class IntelligentChunkUploader:
         
         return result
     
-    def _get_node_for_upload(self, arquivo_nome: str, chunk_numero: int, tentativa: int) -> Optional[Dict]:
+    def _get_node_for_upload(self, arquivo_nome: str, chunk_numero: int, tentativa: int) -> Optional[fs_pb2.NodeInfo]:
         """Obtém nó para upload, considerando falhas anteriores"""
         try:
             if tentativa == 0:
@@ -106,6 +106,10 @@ class IntelligentChunkUploader:
                     arquivo_nome, chunk_numero
                 )
             
+            if response and response.sucesso and response.no_recomendado:
+                return response.no_recomendado # Retorna o objeto NodeInfo diretamente
+            
+        
             if response and hasattr(response, 'node_info') and response.node_info:
                 return response.node_info
             elif response and hasattr(response, 'replicas') and response.replicas:
@@ -120,7 +124,7 @@ class IntelligentChunkUploader:
             return None
     
     def _attempt_chunk_upload(self, arquivo_nome: str, chunk_numero: int, 
-                             chunk_data: bytes, checksum: str, node_info: Dict) -> Tuple[bool, str]:
+                             chunk_data: bytes, checksum: str, node_info: fs_pb2.NodeInfo) -> Tuple[bool, str]:
         """Tenta upload de um chunk para um nó específico"""
         try:
             stub = self.client._get_storage_connection(node_info)
@@ -169,7 +173,7 @@ class IntelligentChunkDownloader:
         self.retry_config = RetryConfig()
     
     def download_chunk_with_retry(self, arquivo_nome: str, chunk_numero: int, 
-                                 chunk_info: Dict) -> ChunkOperationResult:
+                                 chunk_info: fs_pb2.NodeInfo) -> ChunkOperationResult:
         """Download de um chunk com retry inteligente"""
         result = ChunkOperationResult(chunk_numero)
         
@@ -218,7 +222,7 @@ class IntelligentChunkDownloader:
         
         return result
     
-    def _get_node_for_download(self, arquivo_nome: str, chunk_numero: int, tentativa: int) -> Optional[Dict]:
+    def _get_node_for_download(self, arquivo_nome: str, chunk_numero: int, tentativa: int) -> Optional[fs_pb2.NodeInfo]:
         """Obtém nó para download, considerando falhas anteriores"""
         try:
             # Obter réplicas disponíveis para o chunk
@@ -226,11 +230,10 @@ class IntelligentChunkDownloader:
                 arquivo_nome, chunk_numero
             )
             
-            if response and hasattr(response, 'replicas') and response.replicas:
+            if response and response.sucesso and response.replicas_disponiveis:
                 # Tentar réplicas em ordem, mas pular as que já falharam
-                if tentativa < len(response.replicas):
-                    replica = response.replicas[tentativa]
-                    return replica
+                if tentativa < len(response.replicas_disponiveis):
+                    return response.replicas_disponiveis[tentativa] # Retorna o objeto NodeInfo
             
             return None
             
@@ -239,7 +242,7 @@ class IntelligentChunkDownloader:
             return None
     
     def _attempt_chunk_download(self, arquivo_nome: str, chunk_numero: int, 
-                               node_info: Dict, expected_checksum: str) -> Tuple[Optional[bytes], str]:
+                               node_info: fs_pb2.NodeInfo, expected_checksum: str) -> Tuple[Optional[bytes], str]:
         """Tenta download de um chunk de um nó específico"""
         try:
             stub = self.client._get_storage_connection(node_info)
@@ -304,8 +307,10 @@ class AdvancedBigFSClient:
             print(f"❌ Erro ao conectar com servidor de metadados: {e}")
             self.metadata_client = None
     
-    def _get_storage_connection(self, node_info: Dict) -> Optional[fs_grpc.FileSystemServiceStub]:
+    def _get_storage_connection(self, node_info: fs_pb2.NodeInfo) -> Optional[fs_grpc.FileSystemServiceStub]:
         """Obtém conexão com nó de armazenamento (com cache)"""
+        if not node_info:
+            return None
         node_address = f"{node_info['endereco']}:{node_info['porta']}"
         
         if node_address not in self.storage_connections:

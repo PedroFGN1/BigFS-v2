@@ -135,7 +135,7 @@ class MetadataClient:
                               chunk_numero: int = -1) -> Optional[object]:
         """Obtém o melhor nó para uma operação"""
         try:
-            request = fs_pb2.NodeOperationRequest(
+            request = fs_pb2.OperationRequest(
                 tipo_operacao=tipo_operacao,
                 arquivo_nome=arquivo_nome,
                 chunk_numero=chunk_numero
@@ -204,14 +204,14 @@ class MetadataClient:
             print(f"Erro na comunicação ao marcar arquivo: {e}")
             return False
     
-    def list_files(self, directory: str = "/") -> List[str]:
-        """Lista arquivos no diretório"""
+    def list_files(self, directory: str = "/") -> Optional[List[str]]:
+        """Lista arquivos no diretório global"""
         try:
             request = fs_pb2.CaminhoRequest(path=directory)
             response = self.stub.ListarArquivos(request)
             
             if response.sucesso:
-                return list(response.arquivos)
+                return list(response.nomes_arquivos)
             else:
                 print(f"Erro ao listar arquivos: {response.mensagem}")
                 return []
@@ -232,14 +232,53 @@ class MetadataClient:
             print(f"Erro na comunicação ao deletar arquivo: {e}")
             return False
     
-    def get_system_status(self) -> Dict:
+    def get_system_status(self, incluir_detalhes: bool = True, 
+                         incluir_estatisticas: bool = True) -> dict:
         """Obtém status do sistema"""
         try:
-            request = fs_pb2.StatusRequest()
-            response = self.stub.ObterStatusSistema(request)
+            request = fs_pb2.StatusRequest(
+                incluir_detalhes_nos=incluir_detalhes,
+                incluir_estatisticas=incluir_estatisticas
+            )
             
+            response = self.stub.ObterStatusSistema(request)
             if response.sucesso:
-                return response.status
+                status = {
+                    'total_nos': response.status_sistema.total_nos,
+                    'nos_ativos': response.status_sistema.nos_ativos,
+                    'nos_falhos': response.status_sistema.nos_falhos,
+                    'total_arquivos': response.status_sistema.total_arquivos,
+                    'total_chunks': response.status_sistema.total_chunks,
+                    'storage_total': response.status_sistema.storage_total,
+                    'storage_usado': response.status_sistema.storage_usado
+                }
+                
+                if incluir_detalhes:
+                    status['detalhes_nos'] = []
+                    for node in response.status_sistema.detalhes_nos:
+                        status['detalhes_nos'].append({
+                            'node_id': node.node_id,
+                            'endereco': node.endereco,
+                            'porta': node.porta,
+                            'status': node.status,
+                            'capacidade_storage': node.capacidade_storage,
+                            'storage_usado': node.storage_usado,
+                            'ultimo_heartbeat': node.ultimo_heartbeat
+                        })
+                
+                if incluir_estatisticas and response.status_sistema.estatisticas:
+                    stats = response.status_sistema.estatisticas
+                    status['estatisticas'] = {
+                        'operacoes_upload_total': stats.operacoes_upload_total,
+                        'operacoes_download_total': stats.operacoes_download_total,
+                        'operacoes_delete_total': stats.operacoes_delete_total,
+                        'falhas_detectadas': stats.falhas_detectadas,
+                        'replicacoes_realizadas': stats.replicacoes_realizadas,
+                        'tempo_medio_upload': stats.tempo_medio_upload,
+                        'tempo_medio_download': stats.tempo_medio_download
+                    }
+                
+                return status
             else:
                 print(f"Erro ao obter status: {response.mensagem}")
                 return {}
@@ -352,6 +391,10 @@ class HeartbeatSender:
             
             # Aguardar próximo heartbeat
             time.sleep(self.interval)
+
+    def update_chunks(self, chunks: set):
+        """Atualiza a lista de chunks armazenados"""
+        self.chunks_armazenados = chunks.copy()
 
 # Exemplo de uso
 if __name__ == "__main__":

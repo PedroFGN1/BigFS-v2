@@ -34,6 +34,8 @@ service FileSystemService {
 // Serviço de Metadados - gerencia informações sobre arquivos, chunks e nós
 service MetadataService {
   // Gerenciamento de arquivos
+  // NOVA RPC PARA LISTAGEM GLOBAL
+  rpc ListarArquivos(CaminhoRequest) returns (FileListResponse);
   rpc RegistrarArquivo (FileMetadataRequest) returns (OperacaoResponse);
   rpc ObterMetadataArquivo (CaminhoRequest) returns (FileMetadataResponse);
   rpc RemoverArquivo (CaminhoRequest) returns (OperacaoResponse);
@@ -300,6 +302,12 @@ message NodeFailureRequest {
 // ========================================
 // MENSAGENS PARA OPERAÇÕES E REDIRECIONAMENTO
 // ========================================
+
+message FileListResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  repeated string nomes_arquivos = 3; // Uma lista de nomes de arquivos
+}
 
 message OperationRequest {
   string tipo_operacao = 1;    // "upload", "download", "delete"

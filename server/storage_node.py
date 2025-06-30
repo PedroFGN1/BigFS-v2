@@ -59,15 +59,15 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
             
             # Registrar nó no servidor de metadados
             capacidade_storage = 10 * 1024 * 1024 * 1024  # 10GB padrão
-            node_id_atribuido = self.metadata_client.register_node(
+            response = self.metadata_client.register_node(
                 self.node_id,
                 "localhost",  # obter IP real
                 self.node_port,
                 capacidade_storage
             )
             
-            if node_id_atribuido.sucesso:
-                self.node_id = node_id_atribuido.node_id_atribuido
+            if response and response.sucesso: # Acessa o atributo 'sucesso' do objeto gRPC
+                self.node_id = response.node_id_atribuido # Acessa o atributo 'node_id_atribuido'
                 print(f"Nó registrado no servidor de metadados: {self.node_id}")
                 
                 # Iniciar heartbeat
@@ -159,7 +159,8 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                     []  # Réplicas serão adicionadas depois
                 )
                 
-                if not sucesso_registro.sucesso:                    return fs_pb2.OperacaoResponse(
+                if not sucesso_registro.sucesso:                    
+                    return fs_pb2.OperacaoResponse(
                         sucesso=False,
                         mensagem="Erro ao registrar arquivo no servidor de metadados"
                     )
