@@ -128,53 +128,72 @@ class BigFSClient:
             return False
     
     def upload(self, caminho_local: str, caminho_remoto: str) -> bool:
-        """Upload de arquivo com suporte automático a chunks"""
+        """
+        Orquestra o upload de um arquivo: registra os metadados, envia os dados
+        para um nó de armazenamento e, ao final, marca o arquivo como completo.
+        """
         if not os.path.exists(caminho_local):
-            print("❌ Arquivo local não encontrado")
+            print("❌ Arquivo local não encontrado.")
             return False
         
         if not self.metadata_client:
-            print("❌ Servidor de metadados não disponível")
+            print("❌ Servidor de metadados não disponível.")
             return False
-        
-        arquivo_nome = os.path.basename(caminho_remoto)
-        
-        # Obter nó para upload
-        node_response = self.metadata_client.get_node_for_operation("upload", arquivo_nome)
-        if not node_response and node_response.sucesso:
-            print("❌ Nenhum nó disponível para upload")
-            return False
-        
-        node_info = node_response.no_recomendado
 
-        stub = self._get_storage_connection(node_info)
-
-        if not stub:
-            return False
-        
         try:
-            # Ler arquivo
+            # 1. Preparar os dados do arquivo para o registro
+            arquivo_nome = os.path.basename(caminho_remoto)
             with open(caminho_local, "rb") as f:
                 dados = f.read()
             
             tamanho_arquivo = len(dados)
-            print(f"📤 Enviando {arquivo_nome} ({tamanho_arquivo} bytes) para {node_info.node_id}")
-            
-            # Fazer upload (o nó decidirá se divide em chunks)
-            request = fs_pb2.FileUploadRequest(
-                path=caminho_remoto,
-                dados=dados
+            import hashlib
+            checksum_arquivo = hashlib.md5(dados).hexdigest()
+            # A lógica de quantos chunks serão criados fica no nó,
+            # mas podemos deixar um placeholder ou um valor padrão (1) para o registro inicial.
+            total_chunks = 1 
+
+            # 2. REGISTRAR o arquivo no servidor de metadados ANTES do envio
+            print(f"INFO: Registrando metadados para '{arquivo_nome}'...")
+            sucesso_registro = self.metadata_client.register_file(
+                nome_arquivo=arquivo_nome,
+                tamanho_total=tamanho_arquivo,
+                total_chunks=total_chunks, # O nó atualizará isso se dividir o arquivo
+                checksum_arquivo=checksum_arquivo
             )
-            
-            response = stub.Upload(request)
-            
-            if response.sucesso:
-                print("✅", response.mensagem)
-                return True
-            else:
-                print("❌ Erro no upload:", response.mensagem)
+            if not sucesso_registro:
+                print("❌ Falha ao registrar metadados. Abortando upload.")
                 return False
-                
+            
+            # 3. Obter um nó de armazenamento para enviar o arquivo
+            print("INFO: Solicitando nó de armazenamento...")
+            node_response = self.metadata_client.get_node_for_operation("upload", arquivo_nome)
+            if not (node_response and node_response.sucesso):
+                print("❌ Nenhum nó de armazenamento disponível. Abortando.")
+                self.metadata_client.remove_file(arquivo_nome) # Limpa o registro órfão
+                return False
+            
+            node_info = node_response.no_recomendado
+            
+            # 4. ENVIAR o arquivo para o nó de armazenamento
+            print(f"INFO: Enviando {tamanho_arquivo} bytes para o nó {node_info.node_id}...")
+            stub = self._get_storage_connection(node_info)
+            if not stub: return False
+
+            request = fs_pb2.FileUploadRequest(path=caminho_remoto, dados=dados)
+            upload_response = stub.Upload(request)
+            
+            if not upload_response.sucesso:
+                print(f"❌ Falha no upload para o nó: {upload_response.mensagem}")
+                return False
+
+            # 5. FINALIZAR: Marcar o upload como completo no servidor de metadados
+            # Esta chamada é importante para o sistema saber que o arquivo está pronto para uso.
+            print(f"INFO: Finalizando e marcando o arquivo como completo...")
+            self.metadata_client.mark_file_complete(arquivo_nome)
+
+            print(f"✅ Upload de '{arquivo_nome}' concluído com sucesso!")
+            return True
         except Exception as e:
             print(f"❌ Erro na comunicação: {e}")
             return False

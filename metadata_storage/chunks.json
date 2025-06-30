@@ -358,5 +358,25 @@
     "tamanho_chunk": 526938,
     "timestamp_criacao": 1750864343,
     "disponivel": true
+  },
+  "test.txt:0": {
+    "arquivo_nome": "test.txt",
+    "chunk_numero": 0,
+    "no_primario": "node_50051_1751253500",
+    "nos_replicas": [],
+    "checksum": "a2e63ee01401aaeca78be023dfbb8c59",
+    "tamanho_chunk": 2,
+    "timestamp_criacao": 1751253834,
+    "disponivel": true
+  },
+  "locale.txt:0": {
+    "arquivo_nome": "locale.txt",
+    "chunk_numero": 0,
+    "no_primario": "node_50051_1751254888",
+    "nos_replicas": [],
+    "checksum": "a2e63ee01401aaeca78be023dfbb8c59",
+    "tamanho_chunk": 2,
+    "timestamp_criacao": 1751254968,
+    "disponivel": true
   }
 }

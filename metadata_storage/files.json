@@ -9,5 +9,27 @@
     "no_primario": "client_upload",
     "nos_replicas": [],
     "esta_completo": false
+  },
+  "test.txt": {
+    "nome_arquivo": "test.txt",
+    "tamanho_total": 2,
+    "total_chunks": 1,
+    "checksum_arquivo": "a2e63ee01401aaeca78be023dfbb8c59",
+    "timestamp_criacao": 1751253834,
+    "timestamp_modificacao": 1751253834,
+    "no_primario": "",
+    "nos_replicas": [],
+    "esta_completo": false
+  },
+  "locale.txt": {
+    "nome_arquivo": "locale.txt",
+    "tamanho_total": 2,
+    "total_chunks": 1,
+    "checksum_arquivo": "a2e63ee01401aaeca78be023dfbb8c59",
+    "timestamp_criacao": 1751254968,
+    "timestamp_modificacao": 1751254968,
+    "no_primario": "",
+    "nos_replicas": [],
+    "esta_completo": false
   }
 }

@@ -124,95 +124,118 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
         )
     
     def Upload(self, request, context):
-        """Upload de arquivo completo com divisão automática em chunks se necessário"""
+        """
+        Upload de arquivo completo com divisão automática em chunks se necessário
+        Recebe um arquivo, o salva (dividindo em chunks se necessário) e registra APENAS os metadados dos chunks que ele armazena.
+        """
         try:
             arquivo_nome = os.path.basename(request.path)
             dados = request.dados
-            tamanho_arquivo = len(dados)
             
-            print(f"Upload de {arquivo_nome} ({tamanho_arquivo} bytes)")
-            
-            # Se arquivo é pequeno, salvar normalmente
-            if tamanho_arquivo <= self.chunk_size:
-                sucesso, mensagem = salvar_arquivo(self.base_dir, request.path, dados)
-                return fs_pb2.OperacaoResponse(
-                    sucesso=sucesso,
-                    mensagem=mensagem
-                )
+            print(f"INFO: Processando upload para '{arquivo_nome}' no nó.")
 
-            
-            # Arquivo grande - dividir em chunks
-            chunks = dividir_arquivo_em_chunks(dados, self.chunk_size)
-            total_chunks = len(chunks)
-            checksum_arquivo = calcular_checksum(dados)
-            
-            print(f"Dividindo arquivo em {total_chunks} chunks")
-            
-            # Registrar arquivo no servidor de metadados
-            if self.metadata_client:
-                sucesso_registro = self.metadata_client.register_file(
-                    arquivo_nome,
-                    tamanho_arquivo,
-                    total_chunks,
-                    checksum_arquivo,
-                    self.node_id,
-                    []  # Réplicas serão adicionadas depois
-                )
+            if not self.metadata_client:
+                return fs_pb2.OperacaoResponse(sucesso=False, mensagem="Erro Crítico: Nó não conectado ao servidor de metadados.")
+
+            # Se o arquivo for MENOR ou IGUAL ao tamanho do chunk, trate-o como um único chunk.
+            if len(dados) <= self.chunk_size:
+                print(f"INFO: Arquivo pequeno. Salvando como chunk único.")
+                sucesso_salvar, _ = salvar_chunk(self.base_dir, arquivo_nome, 0, dados)
+                if not sucesso_salvar:
+                    return fs_pb2.OperacaoResponse(sucesso=False, mensagem="Falha ao salvar arquivo no disco.")
                 
-                if not sucesso_registro.sucesso:                    
+                # Registre esse único chunk no servidor de metadados.
+                checksum_chunk = calcular_checksum(dados)
+                sucesso_registro = self.metadata_client.register_chunk(
+                    arquivo_nome, 0, self.node_id, [], checksum_chunk, len(dados)
+                )
+                if not sucesso_registro:
+                    return fs_pb2.OperacaoResponse(sucesso=False, mensagem="Falha ao registrar metadados do chunk.")
+                
+                # Atualizar heartbeat com novos chunks
+                if self.heartbeat_sender:
+                    chunks_atuais = listar_chunks_armazenados(self.base_dir)
+                    self.heartbeat_sender.update_chunks(set(chunks_atuais))
+                
+                return fs_pb2.OperacaoResponse(
+                        sucesso=True,
+                        mensagem=f"Arquivo em chunk única salvo com sucesso"
+                    )
+            else:
+                # Se o arquivo for GRANDE, divida-o e registre cada chunk.
+                print(f"INFO: Arquivo grande. Dividindo em chunks...")
+                
+                chunks = dividir_arquivo_em_chunks(dados, self.chunk_size)
+                total_chunks = len(chunks)
+                checksum_arquivo = calcular_checksum(dados)
+                
+                print(f"Dividindo arquivo em {total_chunks} chunks")
+                
+                # Registrar arquivo no servidor de metadados
+                if self.metadata_client:
+                    sucesso_registro = self.metadata_client.register_file(
+                        arquivo_nome,
+                        tamanho_arquivo,
+                        total_chunks,
+                        checksum_arquivo,
+                        self.node_id,
+                        []  # Réplicas serão adicionadas depois
+                    )
+                    
+                    if not sucesso_registro.sucesso:                    
+                        return fs_pb2.OperacaoResponse(
+                            sucesso=False,
+                            mensagem="Erro ao registrar arquivo no servidor de metadados"
+                        )
+                
+                # Salvar chunks
+                chunks_salvos = 0
+                for i, chunk_data in enumerate(chunks):
+                    sucesso_chunk, mensagem_chunk = salvar_chunk(
+                        self.base_dir, arquivo_nome, i, chunk_data
+                    )
+                    
+                    if sucesso_chunk:
+                        chunks_salvos += 1
+                        
+                        # Registrar chunk no servidor de metadados
+                        if self.metadata_client:
+                            checksum_chunk = calcular_checksum(chunk_data)
+                            self.metadata_client.register_chunk(
+                                arquivo_nome,
+                                i,
+                                self.node_id,
+                                [],  # Réplicas serão adicionadas depois
+                                checksum_chunk,
+                                len(chunk_data)
+                            ).sucesso
+                        # Salvar metadados locais do chunk
+                        metadata = {
+                            'arquivo_nome': arquivo_nome,
+                            'chunk_numero': i,
+                            'checksum': calcular_checksum(chunk_data),
+                            'tamanho': len(chunk_data),
+                            'timestamp': int(time.time())
+                        }
+                        salvar_metadata_chunk(self.base_dir, arquivo_nome, i, metadata)
+                    else:
+                        print(f"Erro ao salvar chunk {i}: {mensagem_chunk}")
+                
+                # Atualizar heartbeat com novos chunks
+                if self.heartbeat_sender:
+                    chunks_atuais = listar_chunks_armazenados(self.base_dir)
+                    self.heartbeat_sender.update_chunks(set(chunks_atuais))
+
+                if chunks_salvos == total_chunks:
+                    return fs_pb2.OperacaoResponse(
+                        sucesso=True,
+                        mensagem=f"Arquivo dividido em {total_chunks} chunks e salvo com sucesso"
+                    )
+                else:
                     return fs_pb2.OperacaoResponse(
                         sucesso=False,
-                        mensagem="Erro ao registrar arquivo no servidor de metadados"
+                        mensagem=f"Apenas {chunks_salvos}/{total_chunks} chunks foram salvos"
                     )
-            
-            # Salvar chunks
-            chunks_salvos = 0
-            for i, chunk_data in enumerate(chunks):
-                sucesso_chunk, mensagem_chunk = salvar_chunk(
-                    self.base_dir, arquivo_nome, i, chunk_data
-                )
-                
-                if sucesso_chunk:
-                    chunks_salvos += 1
-                    
-                    # Registrar chunk no servidor de metadados
-                    if self.metadata_client:
-                        checksum_chunk = calcular_checksum(chunk_data)
-                        self.metadata_client.register_chunk(
-                            arquivo_nome,
-                            i,
-                            self.node_id,
-                            [],  # Réplicas serão adicionadas depois
-                            checksum_chunk,
-                            len(chunk_data)
-                        ).sucesso
-                    # Salvar metadados locais do chunk
-                    metadata = {
-                        'arquivo_nome': arquivo_nome,
-                        'chunk_numero': i,
-                        'checksum': calcular_checksum(chunk_data),
-                        'tamanho': len(chunk_data),
-                        'timestamp': int(time.time())
-                    }
-                    salvar_metadata_chunk(self.base_dir, arquivo_nome, i, metadata)
-                else:
-                    print(f"Erro ao salvar chunk {i}: {mensagem_chunk}")
-            
-            # Atualizar heartbeat com novos chunks
-            if self.heartbeat_sender:
-                chunks_atuais = listar_chunks_armazenados(self.base_dir)
-                self.heartbeat_sender.update_chunks(set(chunks_atuais))
-            
-            if chunks_salvos == total_chunks:
-                return fs_pb2.OperacaoResponse(
-                    sucesso=True,
-                    mensagem=f"Arquivo dividido em {total_chunks} chunks e salvo com sucesso"
-                )
-            else:
-                return fs_pb2.OperacaoResponse(
-                    sucesso=False,
-                    mensagem=f"Apenas {chunks_salvos}/{total_chunks} chunks foram salvos"
-                )
                 
         except Exception as e:
             return fs_pb2.OperacaoResponse(

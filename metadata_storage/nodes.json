@@ -13,10 +13,32 @@
     "node_id": "node_50051_1751246598",
     "endereco": "localhost",
     "porta": 50051,
-    "status": "ATIVO",
+    "status": "FALHA",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751246598,
+    "ultimo_heartbeat": 1751253325,
     "chunks_armazenados": []
+  },
+  "node_50051_1751253500": {
+    "node_id": "node_50051_1751253500",
+    "endereco": "localhost",
+    "porta": 50051,
+    "status": "FALHA",
+    "capacidade_storage": 10737418240,
+    "storage_usado": 2,
+    "ultimo_heartbeat": 1751254866,
+    "chunks_armazenados": []
+  },
+  "node_50051_1751254888": {
+    "node_id": "node_50051_1751254888",
+    "endereco": "localhost",
+    "porta": 50051,
+    "status": "ATIVO",
+    "capacidade_storage": 10737418240,
+    "storage_usado": 2,
+    "ultimo_heartbeat": 1751254963,
+    "chunks_armazenados": [
+      "locale.txt:0"
+    ]
   }
 }
