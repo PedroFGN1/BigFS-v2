@@ -662,6 +662,11 @@ class MetadataServiceStub(object):
                 request_serializer=proto_dot_filesystem__extended__pb2.CaminhoRequest.SerializeToString,
                 response_deserializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
                 _registered_method=True)
+        self.MarcarArquivoCompleto = channel.unary_unary(
+                '/filesystem.MetadataService/MarcarArquivoCompleto',
+                request_serializer=proto_dot_filesystem__extended__pb2.CaminhoRequest.SerializeToString,
+                response_deserializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
+                _registered_method=True)
         self.RegistrarChunk = channel.unary_unary(
                 '/filesystem.MetadataService/RegistrarChunk',
                 request_serializer=proto_dot_filesystem__extended__pb2.ChunkMetadataRequest.SerializeToString,
@@ -720,7 +725,6 @@ class MetadataServiceServicer(object):
 
     def ListarArquivos(self, request, context):
         """Gerenciamento de arquivos
-        NOVA RPC PARA LISTAGEM GLOBAL
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -739,6 +743,12 @@ class MetadataServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def RemoverArquivo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def MarcarArquivoCompleto(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -828,6 +838,11 @@ def add_MetadataServiceServicer_to_server(servicer, server):
             ),
             'RemoverArquivo': grpc.unary_unary_rpc_method_handler(
                     servicer.RemoverArquivo,
+                    request_deserializer=proto_dot_filesystem__extended__pb2.CaminhoRequest.FromString,
+                    response_serializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.SerializeToString,
+            ),
+            'MarcarArquivoCompleto': grpc.unary_unary_rpc_method_handler(
+                    servicer.MarcarArquivoCompleto,
                     request_deserializer=proto_dot_filesystem__extended__pb2.CaminhoRequest.FromString,
                     response_serializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.SerializeToString,
             ),
@@ -989,6 +1004,33 @@ class MetadataService(object):
             request,
             target,
             '/filesystem.MetadataService/RemoverArquivo',
+            proto_dot_filesystem__extended__pb2.CaminhoRequest.SerializeToString,
+            proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def MarcarArquivoCompleto(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filesystem.MetadataService/MarcarArquivoCompleto',
             proto_dot_filesystem__extended__pb2.CaminhoRequest.SerializeToString,
             proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
             options,

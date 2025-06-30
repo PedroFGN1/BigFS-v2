@@ -80,17 +80,16 @@ python metadata_server/metadata_server.py --port 50052
 
 #### Terminal 2 - Nó 1
 ```bash
-python server/storage_node.py --port 50051 --node-id node_1 --storage-dir /tmp/bigfs_storage_1
+python server/storage_node.py --port 50051 --node-id node_1 --storage-dir ...escolher diretório de armazenamento...
 ```
 
 #### Terminal 3 - Nó 2
 ```bash
-python server/storage_node.py --port 50053 --node-id node_2 --storage-dir /tmp/bigfs_storage_2
-```
+python server/storage_node.py --port 50053 --node-id node_2 --storage-dir ...escolher diretório de armazenamento...
 
 #### Terminal 4 - Nó 3
 ```bash
-python server/storage_node.py --port 50054 --node-id node_3 --storage-dir /tmp/bigfs_storage_3
+python server/storage_node.py --port 50054 --node-id node_3 --storage-dir ...escolher diretório de armazenamento...
 ```
 
 #### Terminal 5 - Cliente

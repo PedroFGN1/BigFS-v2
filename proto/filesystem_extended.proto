@@ -34,11 +34,11 @@ service FileSystemService {
 // Serviço de Metadados - gerencia informações sobre arquivos, chunks e nós
 service MetadataService {
   // Gerenciamento de arquivos
-  // NOVA RPC PARA LISTAGEM GLOBAL
   rpc ListarArquivos(CaminhoRequest) returns (FileListResponse);
   rpc RegistrarArquivo (FileMetadataRequest) returns (OperacaoResponse);
   rpc ObterMetadataArquivo (CaminhoRequest) returns (FileMetadataResponse);
   rpc RemoverArquivo (CaminhoRequest) returns (OperacaoResponse);
+  rpc MarcarArquivoCompleto(CaminhoRequest) returns (OperacaoResponse);
   
   // Gerenciamento de chunks
   rpc RegistrarChunk (ChunkMetadataRequest) returns (OperacaoResponse);

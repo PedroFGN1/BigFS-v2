@@ -111,7 +111,7 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 sucesso=False,
                 mensagem=f"Erro interno: {str(e)}"
             )
-    
+        
     def RegistrarChunk(self, request, context):
         """Registra metadados de um chunk"""
         try:
@@ -428,6 +428,16 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 sucesso=False,
                 mensagem=f"Erro interno: {str(e)}"
             )
+
+    def MarcarArquivoCompleto(self, request, context):
+        """Implementação da RPC para marcar um arquivo como completo."""
+        try:
+            sucesso = self.metadata_manager.mark_file_as_complete(request.path)
+            mensagem = f"Arquivo '{request.path}' finalizado." if sucesso else f"Não foi possível finalizar o arquivo '{request.path}'."
+            return fs_pb2.OperacaoResponse(sucesso=sucesso, mensagem=mensagem)
+        except Exception as e:
+            return fs_pb2.OperacaoResponse(sucesso=False, mensagem=f"Erro interno: {str(e)}")
+
 
 def serve(port=50052, data_dir="metadata_storage"):
     """Inicia o servidor de metadados"""

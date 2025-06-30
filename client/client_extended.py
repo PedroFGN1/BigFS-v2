@@ -306,12 +306,14 @@ class BigFSClient:
             return False
         
         # Obter nó para operação de cópia
-        node = self.metadata_client.get_node_for_operation("copy", origem)
-        if not node:
+        node_response = self.metadata_client.get_node_for_operation("copy", origem)
+        if not node_response:
             print("❌ Nenhum nó disponível para cópia")
             return False
         
-        stub = self._get_storage_connection(node)
+        node_info = node_response.no_recomendado
+
+        stub = self._get_storage_connection(node_info)
         if not stub:
             return False
         

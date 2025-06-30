@@ -60,14 +60,32 @@ def deletar_chunk(caminho_base: str, arquivo_nome: str, chunk_numero: int) -> Tu
     """Deleta um chunk específico do disco"""
     try:
         chunks_dir = os.path.join(caminho_base, "chunks")
+        metadata_dir = os.path.join(caminho_base, "metadata")
+        
         chunk_filename = f"{arquivo_nome}.chunk_{chunk_numero}"
+        metadata_filename = f"{chunk_filename}.meta"
+        
         chunk_path = os.path.join(chunks_dir, chunk_filename)
+        metadata_path = os.path.join(metadata_dir, metadata_filename)
         
-        if not os.path.exists(chunk_path):
-            return False, f"Chunk {chunk_numero} não encontrado"
+        chunk_encontrado = os.path.exists(chunk_path)
+        metadata_encontrado = os.path.exists(metadata_path)
+
+        if not chunk_encontrado and not metadata_encontrado:
+            return False, f"Chunk {chunk_numero} e seus metadados não foram encontrados."
+
+        # Excluir o arquivo do chunk, se existir
+        if chunk_encontrado:
+            os.remove(chunk_path)
+            print(f"INFO: Chunk de dados '{chunk_path}' removido.")
+
+        # Excluir o arquivo de metadados, se existir
+        if metadata_encontrado:
+            os.remove(metadata_path)
+            print(f"INFO: Metadados do chunk '{metadata_path}' removidos.")
+
+        return True, f"Chunk {chunk_numero} e seus metadados foram removidos com sucesso."
         
-        os.remove(chunk_path)
-        return True, f"Chunk {chunk_numero} removido com sucesso"
     except Exception as e:
         return False, f"Erro ao remover chunk {chunk_numero}: {str(e)}"
 

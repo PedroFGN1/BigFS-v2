@@ -183,7 +183,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                         []  # Réplicas serão adicionadas depois
                     )
                     
-                    if not sucesso_registro.sucesso:                    
+                    if not sucesso_registro:                    
                         return fs_pb2.OperacaoResponse(
                             sucesso=False,
                             mensagem="Erro ao registrar arquivo no servidor de metadados"
@@ -209,7 +209,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                                 [],  # Réplicas serão adicionadas depois
                                 checksum_chunk,
                                 len(chunk_data)
-                            ).sucesso
+                            )
                         # Salvar metadados locais do chunk
                         metadata = {
                             'arquivo_nome': arquivo_nome,

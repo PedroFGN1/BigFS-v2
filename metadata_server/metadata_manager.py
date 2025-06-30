@@ -86,7 +86,8 @@ class MetadataManager:
         
         # Carregar dados persistidos
         self._load_metadata()
-        
+        self.storage_node_stubs = {} # Adicione um cache de stubs para nós de armazenamento
+
         # Iniciar thread de monitoramento de heartbeats
         self.heartbeat_timeout = 30  # 30 segundos
         self.monitoring_thread = threading.Thread(target=self._monitor_heartbeats, daemon=True)
@@ -199,6 +200,14 @@ class MetadataManager:
                 selected_nodes.append(active_nodes[replica_index])
             
             return selected_nodes
+        
+    def _get_storage_node_stub(self, node_info: NodeInfo):
+        """Cria um cache de um stub gRPC para um nó de armazenamento."""
+        node_address = f"{node_info.endereco}:{node_info.porta}"
+        if node_address not in self.storage_node_stubs:
+            channel = grpc.insecure_channel(node_address)
+            self.storage_node_stubs[node_address] = fs_grpc.FileSystemServiceStub(channel)
+        return self.storage_node_stubs[node_address]
     
     def register_file(self, file_metadata: FileMetadata) -> bool:
         """Registra um novo arquivo no sistema"""
@@ -223,22 +232,37 @@ class MetadataManager:
                 if nome_arquivo not in self.files:
                     return False
                 
-                # Remover chunks do arquivo
-                chunks_to_remove = [key for key in self.chunks.keys() 
-                                  if key.startswith(f"{nome_arquivo}:")]
-                for chunk_key in chunks_to_remove:
-                    del self.chunks[chunk_key]
+                # 1. Encontrar todos os chunks e suas localizações ANTES de apagar os metadados.
+                chunks_to_remove = self.get_chunk_locations(nome_arquivo)
+
+                # 2. Comandar a exclusão dos chunks nos nós de armazenamento.
+                for chunk_metadata in chunks_to_remove:
+                    node_id = chunk_metadata.no_primario
+                    if node_id in self.nodes:
+                        node_info = self.nodes[node_id]
+                        if node_info.status == "ATIVO":
+                            try:
+                                stub = self._get_storage_node_stub(node_info)
+                                request = fs_pb2.ChunkRequest(arquivo_nome=nome_arquivo, chunk_numero=chunk_metadata.chunk_numero)
+                                stub.DeleteChunk(request, timeout=5) # Envia o comando
+                                print(f"INFO: Comando de exclusão enviado para o chunk {chunk_metadata.chunk_numero} no nó {node_id}.")
+                            except Exception as e:
+                                print(f"AVISO: Falha ao comandar exclusão do chunk {chunk_metadata.chunk_numero} no nó {node_id}: {e}")
+                        else:
+                            print(f"AVISO: Nó {node_id} não está ativo. O chunk {chunk_metadata.chunk_numero} pode se tornar órfão.")
+                    # Repetir a lógica para réplicas, se houver.
+
+                # 3. Agora, remover os registros de metadados.
+                chunk_keys_to_delete = [self._get_chunk_key(c.arquivo_nome, c.chunk_numero) for c in chunks_to_remove]
+                for key in chunk_keys_to_delete:
+                    if key in self.chunks:
+                        del self.chunks[key]
                 
-                # Remover arquivo
                 del self.files[nome_arquivo]
-                
-                # Atualizar chunks armazenados nos nós
-                for node in self.nodes.values():
-                    node.chunks_armazenados = {chunk for chunk in node.chunks_armazenados 
-                                             if not chunk.startswith(f"{nome_arquivo}:")}
                 
                 self._save_metadata()
                 self.stats['operacoes_delete_total'] += 1
+                print(f"INFO: Metadados para '{nome_arquivo}' removidos com sucesso.")
                 return True
         except Exception as e:
             print(f"Erro ao remover arquivo {nome_arquivo}: {e}")
@@ -422,3 +446,20 @@ class MetadataManager:
                 # Por enquanto retorna todos os arquivos.
                 # Melhoria futura - filtrar pelo 'directory'.
                 return list(self.files.keys())
+            
+    def mark_file_as_complete(self, nome_arquivo: str) -> bool:
+        """Marca um arquivo como totalmente carregado e disponível."""
+        try:
+            with self.lock:
+                if nome_arquivo in self.files:
+                    self.files[nome_arquivo].esta_completo = True
+                    self.files[nome_arquivo].timestamp_modificacao = int(time.time())
+                    self._save_metadata()
+                    print(f"INFO: Arquivo '{nome_arquivo}' marcado como completo.")
+                    return True
+                else:
+                    print(f"AVISO: Tentativa de marcar arquivo inexistente '{nome_arquivo}' como completo.")
+                    return False
+        except Exception as e:
+            print(f"ERRO: Exceção ao marcar arquivo como completo: {e}")
+            return False
