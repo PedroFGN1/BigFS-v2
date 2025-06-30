@@ -510,3 +510,8 @@ class MetadataManager:
         """Busca os metadados de um chunk específico."""
         chunk_key = self._get_chunk_key(arquivo_nome, chunk_numero)
         return self.get_chunk_metadata_by_key(chunk_key)
+    
+    def get_node_by_id(self, node_id: str) -> Optional[NodeInfo]:
+        """Busca as informações de um nó específico pelo seu ID."""
+        with self.lock:
+            return self.nodes.get(node_id)

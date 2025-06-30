@@ -6,7 +6,7 @@
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751310131,
+    "ultimo_heartbeat": 1751313945,
     "chunks_armazenados": []
   },
   "node_2": {
@@ -16,7 +16,7 @@
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751310146,
+    "ultimo_heartbeat": 1751313932,
     "chunks_armazenados": []
   }
 }

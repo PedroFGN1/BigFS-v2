@@ -533,17 +533,17 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
         diretamente do servidor de metadados.
         """
         try:
+            print(f"INFO: Recebida verificação de integridade para {request.arquivo_nome}:{request.chunk_numero}")
             # 1. Obter o checksum esperado DO SERVIDOR DE METADADOS.
             if not self.metadata_client:
-                return fs_pb2.IntegrityResponse(sucesso=False, mensagem="Erro: Nó não conectado ao servidor de metadados.")
+                return fs_pb2.IntegrityResponse(sucesso=False, mensagem="Erro Crítico: Nó não conectado ao servidor de metadados.")
 
-            # Esta chamada pressupõe que o metadata_client tenha um método para buscar info de um único chunk.
-            chunk_info = self.metadata_client.get_chunk_info(request.arquivo_nome, request.chunk_numero)
+            chunk_info_response = self.metadata_client.get_chunk_info(request.arquivo_nome, request.chunk_numero)
             
-            if not chunk_info:
+            if not chunk_info_response:
                 return fs_pb2.IntegrityResponse(sucesso=False, mensagem="Não foi possível obter os metadados do chunk do servidor.")
 
-            checksum_esperado = chunk_info.checksum
+            checksum_esperado = chunk_info_response.checksum
 
             # 2. Ler os dados do chunk localmente.
             sucesso, mensagem, dados_chunk = ler_chunk(
@@ -558,7 +558,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
             checksum_atual = calcular_checksum(dados_chunk)
             integridade_ok = (checksum_atual == checksum_esperado)
             
-            msg_final = "Integridade OK." if integridade_ok else f"Checksum não confere! Esperado: {checksum_esperado}, Atual: {checksum_atual}"
+            msg_final = "Integridade OK." if integridade_ok else "Checksum não confere!"
             
             return fs_pb2.IntegrityResponse(
                 sucesso=True,

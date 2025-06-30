@@ -370,6 +370,77 @@ class BigFSClient:
             print(f"❌ Erro ao obter status: {e}")
             return False
 
+    def verificar_integridade_arquivo(self, nome_arquivo: str) -> bool:
+            """
+            Orquestra a verificação de integridade de todos os chunks de um arquivo,
+            comandando cada nó de armazenamento a se autoverificar.
+            """
+            if not self.metadata_client:
+                print("❌ Servidor de metadados não disponível.")
+                return False
+
+            print(f"\n🔍 Iniciando verificação de integridade para o arquivo: '{nome_arquivo}'...")
+
+            # 1. Obter a lista de chunks e suas localizações do servidor de metadados.
+            chunks_info = self.metadata_client.get_chunk_locations(nome_arquivo)
+            if not chunks_info:
+                print(f"❌ Arquivo não encontrado ou não possui chunks registrados.")
+                return False
+
+            total_chunks = len(chunks_info)
+            chunks_ok = 0
+            erros = []
+
+            # 2. Para cada chunk, peça ao nó primário para verificar sua integridade.
+            for chunk in sorted(chunks_info, key=lambda c: c.chunk_numero):
+                node_id = chunk.no_primario
+                chunk_numero = chunk.chunk_numero
+                
+                print(f"  - Verificando Chunk #{chunk_numero} no Nó '{node_id}'...", end=" ")
+                
+                # Obter as informações de conexão do nó.
+                node_response = self.metadata_client.get_node_info(node_id)
+                if not (node_response and node_response.sucesso):
+                    print(f"ERRO: Não foi possível obter informações do nó {node_id}.")
+                    erros.append(f"Chunk #{chunk_numero}: Falha ao contatar nó {node_id}.")
+                    continue
+
+                node_info = node_response.node_info
+                stub = self._get_storage_connection(node_info)
+                if not stub:
+                    print(f"ERRO: Falha ao conectar ao nó {node_id}.")
+                    erros.append(f"Chunk #{chunk_numero}: Falha de conexão com {node_id}.")
+                    continue
+
+                try:
+                    # 3. Enviar o comando de verificação para o nó.
+                    request = fs_pb2.IntegrityRequest(arquivo_nome=nome_arquivo, chunk_numero=chunk_numero)
+                    response = stub.VerificarIntegridade(request)
+                    
+                    if response.sucesso and response.integridade_ok:
+                        print("OK")
+                        chunks_ok += 1
+                    else:
+                        print(f"FALHA ({response.mensagem})")
+                        erros.append(f"Chunk #{chunk_numero}: {response.mensagem}")
+                except Exception as e:
+                    print(f"ERRO DE COMUNICAÇÃO ({e})")
+                    erros.append(f"Chunk #{chunk_numero}: Erro de comunicação com o nó.")
+
+            # 4. Apresentar o resultado final.
+            print("\n--- Relatório de Integridade ---")
+            print(f"Arquivo: {nome_arquivo}")
+            print(f"Chunks Verificados: {total_chunks}")
+            print(f"Chunks Íntegros: {chunks_ok}")
+            print(f"Status Final: {'✅ SUCESSO' if chunks_ok == total_chunks else '❌ FALHA'}")
+
+            if erros:
+                print("\nDetalhes dos Erros:")
+                for erro in erros:
+                    print(f"  - {erro}")
+            
+            return chunks_ok == total_chunks
+
 def exibir_menu():
     print("\n" + "="*50)
     print("🗂️  BigFS-v2 Client - Sistema de Arquivos Distribuído")
@@ -379,8 +450,8 @@ def exibir_menu():
     print("3. 📤 Upload de arquivo")
     print("4. 📥 Download de arquivo")
     print("5. 📋 Copiar arquivo remoto")
-    print("6. 📊 Status do sistema")
-    print("7. 🚪 Sair")
+    print("7. 🔍 Verificar integridade de arquivo")
+    print("8. 🚪 Sair")
     print("="*50)
 
 def main():
@@ -436,7 +507,12 @@ def main():
             elif escolha == "6":
                 client.status_sistema()
                 
-            elif escolha == "7":
+            elif escolha == "7": # Nova opção
+                nome_arquivo = input("Digite o nome do arquivo a ser verificado: ").strip()
+                if nome_arquivo:
+                    client.verificar_integridade_arquivo(nome_arquivo)
+
+            elif escolha == "8": # Ajustar número
                 print("👋 Encerrando cliente...")
                 break
                 

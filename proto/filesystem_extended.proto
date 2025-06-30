@@ -50,6 +50,7 @@ service MetadataService {
   rpc RegistrarNo (NodeRegistrationRequest) returns (NodeRegistrationResponse);
   rpc ObterNosDisponiveis (NodesRequest) returns (NodesResponse);
   rpc ReportarFalhaNo (NodeFailureRequest) returns (OperacaoResponse);
+  rpc GetNodeInfo (NodeInfoRequest) returns (NodeInfoResponse);
   
   // Operações de redirecionamento
   rpc ObterNoParaOperacao (OperationRequest) returns (NodeResponse);
@@ -304,6 +305,18 @@ message NodeFailureRequest {
   string node_id = 1;
   string motivo_falha = 2;
   int64 timestamp_falha = 3;
+}
+
+// Requisição para obter informações de um nó específico pelo seu ID
+message NodeInfoRequest {
+  string node_id = 1;
+}
+
+// Resposta contendo as informações do nó solicitado
+message NodeInfoResponse {
+  bool sucesso = 1;
+  string mensagem = 2;
+  NodeInfo node_info = 3; // Reutilizando a mensagem NodeInfo existente
 }
 
 // ========================================

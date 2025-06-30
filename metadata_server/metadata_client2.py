@@ -355,6 +355,17 @@ class MetadataClient:
             print(f"Erro de comunicação ao buscar informações do chunk: {e}")
             return None
 
+    def get_node_info(self, node_id: str) -> Optional[fs_pb2.NodeInfoResponse]:
+        """Busca as informações de um único nó do servidor."""
+        try:
+            request = fs_pb2.NodeInfoRequest(node_id=node_id)
+            response = self.stub.GetNodeInfo(request) # Chama a nova RPC
+            
+            # Retorna a resposta completa para o chamador decidir o que fazer
+            return response
+        except Exception as e:
+            print(f"Erro de comunicação ao buscar informações do nó '{node_id}': {e}")
+            return None
 
 class HeartbeatSender:
     """Classe para envio automático de heartbeats"""

@@ -702,6 +702,11 @@ class MetadataServiceStub(object):
                 request_serializer=proto_dot_filesystem__extended__pb2.NodeFailureRequest.SerializeToString,
                 response_deserializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
                 _registered_method=True)
+        self.GetNodeInfo = channel.unary_unary(
+                '/filesystem.MetadataService/GetNodeInfo',
+                request_serializer=proto_dot_filesystem__extended__pb2.NodeInfoRequest.SerializeToString,
+                response_deserializer=proto_dot_filesystem__extended__pb2.NodeInfoResponse.FromString,
+                _registered_method=True)
         self.ObterNoParaOperacao = channel.unary_unary(
                 '/filesystem.MetadataService/ObterNoParaOperacao',
                 request_serializer=proto_dot_filesystem__extended__pb2.OperationRequest.SerializeToString,
@@ -803,6 +808,12 @@ class MetadataServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetNodeInfo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def ObterNoParaOperacao(self, request, context):
         """Operações de redirecionamento
         """
@@ -891,6 +902,11 @@ def add_MetadataServiceServicer_to_server(servicer, server):
                     servicer.ReportarFalhaNo,
                     request_deserializer=proto_dot_filesystem__extended__pb2.NodeFailureRequest.FromString,
                     response_serializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.SerializeToString,
+            ),
+            'GetNodeInfo': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetNodeInfo,
+                    request_deserializer=proto_dot_filesystem__extended__pb2.NodeInfoRequest.FromString,
+                    response_serializer=proto_dot_filesystem__extended__pb2.NodeInfoResponse.SerializeToString,
             ),
             'ObterNoParaOperacao': grpc.unary_unary_rpc_method_handler(
                     servicer.ObterNoParaOperacao,
@@ -1238,6 +1254,33 @@ class MetadataService(object):
             '/filesystem.MetadataService/ReportarFalhaNo',
             proto_dot_filesystem__extended__pb2.NodeFailureRequest.SerializeToString,
             proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetNodeInfo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filesystem.MetadataService/GetNodeInfo',
+            proto_dot_filesystem__extended__pb2.NodeInfoRequest.SerializeToString,
+            proto_dot_filesystem__extended__pb2.NodeInfoResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -465,6 +465,33 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 return fs_pb2.ChunkMetadataResponse(sucesso=False, mensagem="Chunk não encontrado.")
         except Exception as e:
             return fs_pb2.ChunkMetadataResponse(sucesso=False, mensagem=f"Erro interno: {str(e)}")
+        
+    def GetNodeInfo(self, request, context):
+        """Implementação da RPC para buscar informações de um único nó."""
+        try:
+            node_info = self.metadata_manager.get_node_by_id(request.node_id)
+            
+            if node_info:
+                # Converte o objeto NodeInfo do dataclass para o objeto NodeInfo do protobuf
+                node_info_pb = fs_pb2.NodeInfo(
+                    node_id=node_info.node_id,
+                    endereco=node_info.endereco,
+                    porta=node_info.porta,
+                    status=fs_pb2.NodeStatus.Value(node_info.status),
+                    capacidade_storage=node_info.capacidade_storage,
+                    storage_usado=node_info.storage_usado,
+                    ultimo_heartbeat=node_info.ultimo_heartbeat,
+                    chunks_armazenados=list(node_info.chunks_armazenados)
+                )
+                return fs_pb2.NodeInfoResponse(
+                    sucesso=True,
+                    mensagem="Informações do nó encontradas.",
+                    node_info=node_info_pb
+                )
+            else:
+                return fs_pb2.NodeInfoResponse(sucesso=False, mensagem=f"Nó com ID '{request.node_id}' não encontrado.")
+        except Exception as e:
+            return fs_pb2.NodeInfoResponse(sucesso=False, mensagem=f"Erro interno: {str(e)}")
 
 def serve(port=50052, data_dir="metadata_storage"):
     """Inicia o servidor de metadados"""

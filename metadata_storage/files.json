@@ -6,7 +6,18 @@
     "checksum_arquivo": "a2e63ee01401aaeca78be023dfbb8c59",
     "timestamp_criacao": 1751294640,
     "timestamp_modificacao": 1751294640,
-    "no_primario": "",
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "esta_completo": true
+  },
+  "video.mp4": {
+    "nome_arquivo": "video.mp4",
+    "tamanho_total": 37227098,
+    "total_chunks": 36,
+    "checksum_arquivo": "a7ce8367fe19fe8f8efd196ee1b93647",
+    "timestamp_criacao": 1751313939,
+    "timestamp_modificacao": 1751313939,
+    "no_primario": "node_1",
     "nos_replicas": [],
     "esta_completo": true
   }
