@@ -44,6 +44,10 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
         self.metadata_client = None
         self.heartbeat_sender = None
         
+        # Cache de conexões gRPC para outros nós de armazenamento
+        self.node_connections = {}  # {node_id: (channel, stub)}
+        self.connections_lock = threading.Lock()
+        
         # Conectar ao servidor de metadados
         self._connect_to_metadata_server()
         
@@ -91,12 +95,69 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
             print(f"Erro ao conectar com servidor de metadados: {e}")
             self.metadata_client = None
     
+    def _get_node_connection(self, node_info):
+        """
+        Obtém conexão gRPC com outro nó de armazenamento (com cache).
+        Retorna o stub gRPC para comunicação.
+        """
+        node_id = node_info.node_id
+        node_address = f"{node_info.endereco}:{node_info.porta}"
+        
+        with self.connections_lock:
+            # Verificar se já existe conexão em cache
+            if node_id in self.node_connections:
+                channel, stub = self.node_connections[node_id]
+                try:
+                    # Testar se a conexão ainda está ativa
+                    channel.get_state(try_to_connect=False)
+                    return stub
+                except:
+                    # Conexão inválida, remover do cache
+                    try:
+                        channel.close()
+                    except:
+                        pass
+                    del self.node_connections[node_id]
+            
+            # Criar nova conexão
+            try:
+                channel = grpc.insecure_channel(
+                    node_address,
+                    options=[
+                        ('grpc.max_send_message_length', 1024 * 1024 * 1024),  # 1GB
+                        ('grpc.max_receive_message_length', 1024 * 1024 * 1024),  # 1GB
+                        ('grpc.keepalive_time_ms', 30000),
+                        ('grpc.keepalive_timeout_ms', 5000),
+                        ('grpc.keepalive_permit_without_calls', True)
+                    ]
+                )
+                stub = fs_grpc.FileSystemServiceStub(channel)
+                
+                # Armazenar no cache
+                self.node_connections[node_id] = (channel, stub)
+                print(f"Nova conexão gRPC criada para nó {node_id} ({node_address})")
+                
+                return stub
+                
+            except Exception as e:
+                print(f"Erro ao criar conexão com nó {node_id} ({node_address}): {e}")
+                return None
+
     def close(self):
         """Fecha conexões e para heartbeat"""
         if self.heartbeat_sender:
             self.heartbeat_sender.stop()
         if self.metadata_client:
             self.metadata_client.close()
+        
+        # Fechar todas as conexões em cache
+        with self.connections_lock:
+            for node_id, (channel, stub) in self.node_connections.items():
+                try:
+                    channel.close()
+                except:
+                    pass
+            self.node_connections.clear()
     
     # ========================================
     # MÉTODOS ORIGINAIS (usando protocolo estendido)
@@ -450,13 +511,21 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 return
             
             # Conectar a cada nó de réplica e enviar o chunk
-            for no_replica in nos_replica:
+            for replica_node_id in nos_replica:
                 try:
-                    print(f"Replicando chunk para nó {no_replica}")
+                    print(f"Replicando chunk para nó {replica_node_id}")
                     
-                    # Conectar ao nó de réplica
-                    channel = grpc.insecure_channel(f"{no_replica}:50051")  # Assumindo porta padrão
-                    stub = fs_grpc.FileSystemServiceStub(channel)
+                    # Obter informações completas do nó de réplica do servidor de metadados
+                    replica_node_info = self.metadata_client.get_node_info(replica_node_id)
+                    if not replica_node_info:
+                        print(f"Informações do nó {replica_node_id} não encontradas no servidor de metadados")
+                        continue
+                    
+                    # Usar conexão em cache para o nó de réplica
+                    stub = self._get_node_connection(replica_node_info)
+                    if not stub:
+                        print(f"Não foi possível conectar ao nó {replica_node_id}")
+                        continue
                     
                     # Criar request de replicação
                     request = fs_pb2.ReplicarChunkRequest(
@@ -468,18 +537,16 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                         no_origem=self.node_id
                     )
                     
-                    # Enviar réplica
-                    response = stub.ReplicarChunk(request)
+                    # Enviar réplica com timeout
+                    response = stub.ReplicarChunk(request, timeout=30)
                     
                     if response.sucesso:
-                        print(f"Réplica enviada com sucesso para {no_replica}")
+                        print(f"Réplica enviada com sucesso para {replica_node_id}")
                     else:
-                        print(f"Erro ao enviar réplica para {no_replica}: {response.mensagem}")
-                    
-                    channel.close()
+                        print(f"Erro ao enviar réplica para {replica_node_id}: {response.mensagem}")
                     
                 except Exception as e:
-                    print(f"Erro ao replicar chunk para {no_replica}: {str(e)}")
+                    print(f"Erro ao replicar chunk para {replica_node_id}: {str(e)}")
             
         except Exception as e:
             print(f"Erro geral na replicação do chunk {arquivo_nome}:{chunk_numero}: {str(e)}")
