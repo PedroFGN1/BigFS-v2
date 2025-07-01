@@ -98,7 +98,7 @@ def listar_chunks_armazenados(caminho_base: str) -> List[str]:
         
         chunks = []
         for filename in os.listdir(chunks_dir):
-            if filename.endswith('.chunk_'):
+             if '.chunk_' in filename:
                 # Extrair nome do arquivo e número do chunk
                 parts = filename.split('.chunk_')
                 if len(parts) == 2:
