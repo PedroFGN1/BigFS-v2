@@ -55,6 +55,76 @@ class BigFSClient:
         
         return self.storage_connections[node_address][1]
     
+    def verify_file_integrity(self, local_path: str, remote_path: str) -> bool:
+        """
+        Verifica a integridade de um arquivo completo comparando checksums.
+        Primeiro baixa o arquivo, depois compara o checksum com o registrado no servidor.
+        """
+        if not self.metadata_client:
+            print("❌ Servidor de metadados não disponível")
+            return False
+        
+        try:
+            print(f"🔍 Iniciando verificação de integridade: {remote_path}")
+            
+            # 1. Obter metadados do arquivo do servidor
+            file_metadata = self.metadata_client.get_file_metadata(remote_path)
+            if not file_metadata:
+                print(f"❌ Arquivo '{remote_path}' não encontrado no servidor")
+                return False
+            
+            expected_checksum = file_metadata.checksum_arquivo
+            print(f"📋 Checksum esperado: {expected_checksum}")
+            
+            # 2. Baixar o arquivo usando a lógica de download paralelo
+            success = self.download_file_parallel(remote_path, local_path)
+            if not success:
+                print(f"❌ Falha ao baixar arquivo para verificação")
+                return False
+            
+            # 3. Calcular checksum do arquivo baixado
+            import hashlib
+            with open(local_path, 'rb') as f:
+                file_data = f.read()
+                calculated_checksum = hashlib.md5(file_data).hexdigest()
+            
+            print(f"📋 Checksum calculado: {calculated_checksum}")
+            
+            # 4. Comparar checksums
+            if calculated_checksum == expected_checksum:
+                print(f"✅ Integridade do arquivo '{remote_path}' confirmada!")
+                return True
+            else:
+                print(f"❌ Integridade comprometida! Checksums não conferem:")
+                print(f"   Esperado: {expected_checksum}")
+                print(f"   Calculado: {calculated_checksum}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Erro durante verificação de integridade: {e}")
+            return False
+    
+    def verify_and_repair_file(self, local_path: str, remote_path: str, max_attempts: int = 3) -> bool:
+        """
+        Verifica integridade e tenta reparar o arquivo se necessário.
+        Faz múltiplas tentativas de download se a integridade falhar.
+        """
+        for attempt in range(max_attempts):
+            print(f"🔄 Tentativa {attempt + 1} de {max_attempts}")
+            
+            if self.verify_file_integrity(local_path, remote_path):
+                return True
+            
+            if attempt < max_attempts - 1:
+                print(f"⚠️ Tentativa {attempt + 1} falhou. Tentando novamente...")
+                # Remover arquivo corrompido antes da próxima tentativa
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+                time.sleep(1)  # Pequena pausa antes da próxima tentativa
+        
+        print(f"❌ Falha na verificação após {max_attempts} tentativas")
+        return False
+
     def _close_connections(self):
         """Fecha todas as conexões"""
         for channel, _ in self.storage_connections.values():

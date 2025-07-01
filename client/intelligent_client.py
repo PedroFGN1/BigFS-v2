@@ -43,21 +43,73 @@ class IntelligentChunkUploader:
         self.lock = threading.Lock()
         self.retry_config = RetryConfig()
     
+    def _get_chunk_node_list(self, arquivo_nome: str, chunk_numero: int) -> List[Dict]:
+        """
+        Método auxiliar para obter lista ordenada de nós para um chunk.
+        Retorna [nó_primário, réplica_1, réplica_2, ...]
+        """
+        try:
+            # Fazer uma única chamada ao metadata_client.get_chunk_locations()
+            chunk_locations = self.client.metadata_client.get_chunk_locations(arquivo_nome)
+            
+            if not chunk_locations:
+                return []
+            
+            # Encontrar informações do chunk específico
+            chunk_info = None
+            for chunk in chunk_locations:
+                if chunk.chunk_numero == chunk_numero:
+                    chunk_info = chunk
+                    break
+            
+            if not chunk_info:
+                print("oi")
+                return []
+            
+            # Montar lista ordenada: [nó_primário, réplica_1, réplica_2, ...]
+            node_list = []
+            
+            # Adicionar nó primário primeiro
+            if hasattr(chunk_info, 'no_primario') and chunk_info.no_primario:
+                node_list.append({
+                    'node_id': chunk_info.no_primario.node_id,
+                    'endereco': chunk_info.no_primario.endereco,
+                    'porta': chunk_info.no_primario.porta,
+                    'tipo': 'primario'
+                })
+            
+            # Adicionar réplicas
+            if hasattr(chunk_info, 'nos_replica') and chunk_info.nos_replica:
+                for replica in chunk_info.nos_replica:
+                    node_list.append({
+                        'node_id': replica.node_id,
+                        'endereco': replica.endereco,
+                        'porta': replica.porta,
+                        'tipo': 'replica'
+                    })
+            print(f"🔍 Lista de nós para chunk {arquivo_nome}:{chunk_numero}: {[node['node_id'] for node in node_list]}")
+            return node_list
+            
+        except Exception as e:
+            print(f"Erro ao obter lista de nós para chunk {arquivo_nome}:{chunk_numero}: {e}")
+            return []
+    
     def upload_chunk_with_retry(self, arquivo_nome: str, chunk_numero: int, 
                                chunk_data: bytes, checksum: str) -> ChunkOperationResult:
         """Upload de um chunk com retry inteligente"""
         result = ChunkOperationResult(chunk_numero)
         
-        for tentativa in range(self.retry_config.max_retries + 1):
+        # Obter lista estática de nós antes de iniciar o loop de retry
+        node_list = self._get_chunk_node_list(arquivo_nome, chunk_numero)
+        if not node_list:
+            result.erro = "Nenhum nó disponível para o chunk"
+            return result
+        
+        # Tentar cada nó da lista em ordem
+        for tentativa, node_info in enumerate(node_list):
             result.tentativas = tentativa + 1
             
             try:
-                # Obter nó para upload (primário ou réplica)
-                node_info = self._get_node_for_upload(arquivo_nome, chunk_numero, tentativa)
-                if not node_info:
-                    result.erro = f"Nenhum nó disponível após {tentativa + 1} tentativas"
-                    continue
-                
                 # Tentar upload
                 sucesso, erro = self._attempt_chunk_upload(
                     arquivo_nome, chunk_numero, chunk_data, checksum, node_info
@@ -66,17 +118,17 @@ class IntelligentChunkUploader:
                 if sucesso:
                     result.sucesso = True
                     result.node_usado = node_info['node_id']
-                    print(f"✅ Chunk {chunk_numero} enviado para {node_info['node_id']} (tentativa {tentativa + 1})")
+                    print(f"✅ Chunk {chunk_numero} enviado para {node_info['node_id']} ({node_info['tipo']}) (tentativa {tentativa + 1})")
                     break
                 else:
                     result.erro = erro
-                    print(f"⚠️ Tentativa {tentativa + 1} falhou para chunk {chunk_numero}: {erro}")
+                    print(f"⚠️ Tentativa {tentativa + 1} falhou para chunk {chunk_numero} no nó {node_info['node_id']}: {erro}")
                     
                     # Reportar falha do nó ao servidor de metadados
                     self._report_node_failure(node_info['node_id'], erro)
                     
-                    # Aguardar antes da próxima tentativa
-                    if tentativa < self.retry_config.max_retries:
+                    # Aguardar antes da próxima tentativa (exceto na última)
+                    if tentativa < len(node_list) - 1:
                         delay = min(
                             self.retry_config.base_delay * (self.retry_config.backoff_multiplier ** tentativa),
                             self.retry_config.max_delay
@@ -92,39 +144,8 @@ class IntelligentChunkUploader:
         
         return result
     
-    def _get_node_for_upload(self, arquivo_nome: str, chunk_numero: int, tentativa: int) -> Optional[fs_pb2.NodeInfo]:
-        """Obtém nó para upload, considerando falhas anteriores"""
-        try:
-            if tentativa == 0:
-                # Primeira tentativa: obter nó primário
-                response = self.client.metadata_client.get_node_for_operation(
-                    "UPLOAD", arquivo_nome, chunk_numero
-                )
-            else:
-                # Tentativas subsequentes: obter réplicas disponíveis
-                response = self.client.metadata_client.get_available_replicas(
-                    arquivo_nome, chunk_numero
-                )
-            
-            if response and response.sucesso and response.no_recomendado:
-                return response.no_recomendado # Retorna o objeto NodeInfo diretamente
-            
-        
-            if response and hasattr(response, 'node_info') and response.node_info:
-                return response.node_info
-            elif response and hasattr(response, 'replicas') and response.replicas:
-                # Pegar primeira réplica disponível
-                replica = response.replicas[0]
-                return replica
-            
-            return None
-            
-        except Exception as e:
-            print(f"Erro ao obter nó para upload: {e}")
-            return None
-    
     def _attempt_chunk_upload(self, arquivo_nome: str, chunk_numero: int, 
-                             chunk_data: bytes, checksum: str, node_info: fs_pb2.NodeInfo) -> Tuple[bool, str]:
+                             chunk_data: bytes, checksum: str, node_info: Dict) -> Tuple[bool, str]:
         """Tenta upload de um chunk para um nó específico"""
         try:
             stub = self.client._get_storage_connection(node_info)
@@ -148,9 +169,9 @@ class IntelligentChunkUploader:
                 
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.UNAVAILABLE:
-                return False, f"Nó {node_info.node_id} indisponível"
+                return False, f"Nó {node_info['node_id']} indisponível"
             elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
-                return False, f"Timeout no nó {node_info.node_id}"
+                return False, f"Timeout no nó {node_info['node_id']}"
             else:
                 return False, f"Erro gRPC: {e.details()}"
         except Exception as e:
@@ -172,41 +193,94 @@ class IntelligentChunkDownloader:
         self.lock = threading.Lock()
         self.retry_config = RetryConfig()
     
+    def _get_chunk_node_list(self, arquivo_nome: str, chunk_numero: int) -> List[Dict]:
+        """
+        Método auxiliar para obter lista ordenada de nós para um chunk.
+        Retorna [nó_primário, réplica_1, réplica_2, ...]
+        """
+        try:
+            # Fazer uma única chamada ao metadata_client.get_chunk_locations()
+            chunk_locations = self.client.metadata_client.get_chunk_locations(arquivo_nome)
+            
+            if not chunk_locations:
+                return []
+            
+            # Encontrar informações do chunk específico
+            chunk_info = None
+            for chunk in chunk_locations:
+                if chunk.chunk_numero == chunk_numero:
+                    chunk_info = chunk
+                    break
+            
+            if not chunk_info:
+                return []
+            
+            # Montar lista ordenada: [nó_primário, réplica_1, réplica_2, ...]
+            node_list = []
+            
+            # Adicionar nó primário primeiro
+            if hasattr(chunk_info, 'no_primario') and chunk_info.no_primario:
+                node_list.append({
+                    'node_id': chunk_info.no_primario.node_id,
+                    'endereco': chunk_info.no_primario.endereco,
+                    'porta': chunk_info.no_primario.porta,
+                    'tipo': 'primario',
+                    'checksum': getattr(chunk_info, 'checksum', '')
+                })
+            
+            # Adicionar réplicas
+            if hasattr(chunk_info, 'nos_replica') and chunk_info.nos_replica:
+                for replica in chunk_info.nos_replica:
+                    node_list.append({
+                        'node_id': replica.node_id,
+                        'endereco': replica.endereco,
+                        'porta': replica.porta,
+                        'tipo': 'replica',
+                        'checksum': getattr(chunk_info, 'checksum', '')
+                    })
+            
+            return node_list
+            
+        except Exception as e:
+            print(f"Erro ao obter lista de nós para chunk {arquivo_nome}:{chunk_numero}: {e}")
+            return []
+    
     def download_chunk_with_retry(self, arquivo_nome: str, chunk_numero: int, 
-                                 chunk_info: fs_pb2.NodeInfo) -> ChunkOperationResult:
+                                 chunk_info: Dict = None) -> ChunkOperationResult:
         """Download de um chunk com retry inteligente"""
         result = ChunkOperationResult(chunk_numero)
         
-        for tentativa in range(self.retry_config.max_retries + 1):
+        # Obter lista estática de nós antes de iniciar o loop de retry
+        node_list = self._get_chunk_node_list(arquivo_nome, chunk_numero)
+        if not node_list:
+            result.erro = "Nenhum nó disponível para o chunk"
+            return result
+        
+        # Tentar cada nó da lista em ordem
+        for tentativa, node_info in enumerate(node_list):
             result.tentativas = tentativa + 1
             
             try:
-                # Obter nó para download
-                node_info = self._get_node_for_download(arquivo_nome, chunk_numero, tentativa)
-                if not node_info:
-                    result.erro = f"Nenhum nó disponível após {tentativa + 1} tentativas"
-                    continue
-                
                 # Tentar download
                 chunk_data, erro = self._attempt_chunk_download(
-                    arquivo_nome, chunk_numero, node_info, chunk_info.get('checksum', '')
+                    arquivo_nome, chunk_numero, node_info, node_info.get('checksum', '')
                 )
                 
                 if chunk_data is not None:
                     result.sucesso = True
                     result.dados = chunk_data
                     result.node_usado = node_info['node_id']
-                    print(f"✅ Chunk {chunk_numero} baixado de {node_info['node_id']} (tentativa {tentativa + 1})")
+                    print(f"✅ Chunk {chunk_numero} baixado de {node_info['node_id']} ({node_info['tipo']}) (tentativa {tentativa + 1})")
                     break
                 else:
                     result.erro = erro
-                    print(f"⚠️ Tentativa {tentativa + 1} falhou para chunk {chunk_numero}: {erro}")
+                    print(f"⚠️ Tentativa {tentativa + 1} falhou para chunk {chunk_numero} no nó {node_info['node_id']}: {erro}")
                     
                     # Reportar falha do nó
                     self._report_node_failure(node_info['node_id'], erro)
                     
-                    # Aguardar antes da próxima tentativa
-                    if tentativa < self.retry_config.max_retries:
+                    # Aguardar antes da próxima tentativa (exceto na última)
+                    if tentativa < len(node_list) - 1:
                         delay = min(
                             self.retry_config.base_delay * (self.retry_config.backoff_multiplier ** tentativa),
                             self.retry_config.max_delay
@@ -222,27 +296,8 @@ class IntelligentChunkDownloader:
         
         return result
     
-    def _get_node_for_download(self, arquivo_nome: str, chunk_numero: int, tentativa: int) -> Optional[fs_pb2.NodeInfo]:
-        """Obtém nó para download, considerando falhas anteriores"""
-        try:
-            # Obter réplicas disponíveis para o chunk
-            response = self.client.metadata_client.get_available_replicas(
-                arquivo_nome, chunk_numero
-            )
-            
-            if response and response.sucesso and response.replicas_disponiveis:
-                # Tentar réplicas em ordem, mas pular as que já falharam
-                if tentativa < len(response.replicas_disponiveis):
-                    return response.replicas_disponiveis[tentativa] # Retorna o objeto NodeInfo
-            
-            return None
-            
-        except Exception as e:
-            print(f"Erro ao obter nó para download: {e}")
-            return None
-    
     def _attempt_chunk_download(self, arquivo_nome: str, chunk_numero: int, 
-                               node_info: fs_pb2.NodeInfo, expected_checksum: str) -> Tuple[Optional[bytes], str]:
+                               node_info: Dict, expected_checksum: str) -> Tuple[Optional[bytes], str]:
         """Tenta download de um chunk de um nó específico"""
         try:
             stub = self.client._get_storage_connection(node_info)
@@ -270,9 +325,9 @@ class IntelligentChunkDownloader:
                 
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.UNAVAILABLE:
-                return None, f"Nó {node_info.node_id} indisponível"
+                return None, f"Nó {node_info['node_id']} indisponível"
             elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
-                return None, f"Timeout no nó {node_info.node_id}"
+                return None, f"Timeout no nó {node_info['node_id']}"
             else:
                 return None, f"Erro gRPC: {e.details()}"
         except Exception as e:
@@ -307,7 +362,7 @@ class AdvancedBigFSClient:
             print(f"❌ Erro ao conectar com servidor de metadados: {e}")
             self.metadata_client = None
     
-    def _get_storage_connection(self, node_info: fs_pb2.NodeInfo) -> Optional[fs_grpc.FileSystemServiceStub]:
+    def _get_storage_connection(self, node_info: Dict) -> Optional[fs_grpc.FileSystemServiceStub]:
         """Obtém conexão com nó de armazenamento (com cache)"""
         if not node_info:
             return None
@@ -333,6 +388,75 @@ class AdvancedBigFSClient:
                 return None
         
         return self.storage_connections.get(node_address)
+    
+    def verify_file_integrity(self, local_path: str, remote_path: str) -> bool:
+        """
+        Verifica a integridade de um arquivo completo comparando checksums.
+        Primeiro baixa o arquivo, depois compara o checksum com o registrado no servidor.
+        """
+        if not self.metadata_client:
+            print("❌ Servidor de metadados não disponível")
+            return False
+        
+        try:
+            print(f"🔍 Iniciando verificação de integridade: {remote_path}")
+            
+            # 1. Obter metadados do arquivo do servidor
+            file_metadata = self.metadata_client.get_file_metadata(remote_path)
+            if not file_metadata:
+                print(f"❌ Arquivo '{remote_path}' não encontrado no servidor")
+                return False
+            
+            expected_checksum = file_metadata.checksum_arquivo
+            print(f"📋 Checksum esperado: {expected_checksum}")
+            
+            # 2. Baixar o arquivo usando a lógica de download paralelo
+            success = self.download_file_parallel(remote_path, local_path)
+            if not success:
+                print(f"❌ Falha ao baixar arquivo para verificação")
+                return False
+            
+            # 3. Calcular checksum do arquivo baixado
+            with open(local_path, 'rb') as f:
+                file_data = f.read()
+                calculated_checksum = self._calculate_checksum(file_data)
+            
+            print(f"📋 Checksum calculado: {calculated_checksum}")
+            
+            # 4. Comparar checksums
+            if calculated_checksum == expected_checksum:
+                print(f"✅ Integridade do arquivo '{remote_path}' confirmada!")
+                return True
+            else:
+                print(f"❌ Integridade comprometida! Checksums não conferem:")
+                print(f"   Esperado: {expected_checksum}")
+                print(f"   Calculado: {calculated_checksum}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Erro durante verificação de integridade: {e}")
+            return False
+    
+    def verify_and_repair_file(self, local_path: str, remote_path: str, max_attempts: int = 3) -> bool:
+        """
+        Verifica integridade e tenta reparar o arquivo se necessário.
+        Faz múltiplas tentativas de download se a integridade falhar.
+        """
+        for attempt in range(max_attempts):
+            print(f"🔄 Tentativa {attempt + 1} de {max_attempts}")
+            
+            if self.verify_file_integrity(local_path, remote_path):
+                return True
+            
+            if attempt < max_attempts - 1:
+                print(f"⚠️ Tentativa {attempt + 1} falhou. Tentando novamente...")
+                # Remover arquivo corrompido antes da próxima tentativa
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+                time.sleep(1)  # Pequena pausa antes da próxima tentativa
+        
+        print(f"❌ Falha na verificação após {max_attempts} tentativas")
+        return False
     
     def _calculate_checksum(self, data: bytes) -> str:
         """Calcula checksum MD5 dos dados"""

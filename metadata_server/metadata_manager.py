@@ -29,6 +29,7 @@ class FileMetadata:
     no_primario: str
     nos_replicas: List[str]
     esta_completo: bool = False
+    status: str = "ativo"  # ativo, deletando, completo
 
 @dataclass
 class ChunkMetadata:
@@ -41,6 +42,7 @@ class ChunkMetadata:
     tamanho_chunk: int
     timestamp_criacao: int
     disponivel: bool = True
+    status: str = "ativo"  # ativo, deletando
 
 @dataclass
 class NodeInfo:
@@ -92,6 +94,14 @@ class MetadataManager:
         self.heartbeat_timeout = 30  # 30 segundos
         self.monitoring_thread = threading.Thread(target=self._monitor_heartbeats, daemon=True)
         self.monitoring_thread.start()
+        
+        # Iniciar thread de limpeza (garbage collection)
+        self.cleanup_thread = threading.Thread(target=self._cleanup_deleted_files, daemon=True)
+        self.cleanup_thread.start()
+        
+        # Iniciar thread de garbage collection para uploads incompletos
+        self.gc_thread = threading.Thread(target=self._garbage_collect_incomplete_uploads, daemon=True)
+        self.gc_thread.start()
     
     def _load_metadata(self):
         """Carrega metadados persistidos do disco"""
@@ -226,61 +236,30 @@ class MetadataManager:
             return self.files.get(nome_arquivo)
     
     def remove_file(self, nome_arquivo: str) -> bool:
-        """Remove um arquivo e todos os seus chunks"""
+        """Remove um arquivo de forma segura (soft delete)"""
         try:
             with self.lock:
                 if nome_arquivo not in self.files:
                     return False
                 
-                # 1. Encontrar todos os chunks e suas localizações ANTES de apagar os metadados.
-                chunks_to_remove = self.get_chunk_locations(nome_arquivo)
-                if not chunks_to_remove:
-                    print(f"AVISO: Nenhum chunk encontrado para o arquivo '{nome_arquivo}'.")
-                    return False
+                # Marcar arquivo para deleção em vez de apagar imediatamente
+                self.files[nome_arquivo].status = "deletando"
+                self.files[nome_arquivo].timestamp_modificacao = int(time.time())
                 
-                nodes_afetados = set() # Usamos um set para evitar recalcular para o mesmo nó várias vezes
-
-                # 2. Comandar a exclusão dos chunks nos nós de armazenamento.
-                for chunk_metadata in chunks_to_remove:
-                    node_id = chunk_metadata.no_primario
-                    if node_id in self.nodes:
-                        node_info = self.nodes[node_id]
-                        if node_info.status == "ATIVO":
-                            try:
-                                stub = self._get_storage_node_stub(node_info)
-                                request = fs_pb2.ChunkRequest(arquivo_nome=nome_arquivo, chunk_numero=chunk_metadata.chunk_numero)
-                                stub.DeleteChunk(request, timeout=5) # Envia o comando
-                                print(f"INFO: Comando de exclusão enviado para o chunk {chunk_metadata.chunk_numero} no nó {node_id}.")
-                            except Exception as e:
-                                print(f"AVISO: Falha ao comandar exclusão do chunk {chunk_metadata.chunk_numero} no nó {node_id}: {e}")
-                        else:
-                            print(f"AVISO: Nó {node_id} não está ativo. O chunk {chunk_metadata.chunk_numero} pode se tornar órfão.")
-                    # Repetir a lógica para réplicas, se houver.
-
-                # 3. Agora, remover os registros de metadados.
-                chunk_keys_to_delete = [self._get_chunk_key(c.arquivo_nome, c.chunk_numero) for c in chunks_to_remove]
-                for key in chunk_keys_to_delete:
-                    if key in self.chunks:
-                        del self.chunks[key]
-
-                del self.files[nome_arquivo]
+                # Marcar chunks para deleção
+                chunks_to_mark = self.get_chunk_locations(nome_arquivo)
+                for chunk_metadata in chunks_to_mark:
+                    chunk_key = self._get_chunk_key(chunk_metadata.arquivo_nome, chunk_metadata.chunk_numero)
+                    if chunk_key in self.chunks:
+                        self.chunks[chunk_key].status = "deletando"
                 
-                # Atualiza o storage_usado para cada nó afetado pela exclusão.
-                for node_id in nodes_afetados:
-                    if node_id in self.nodes:
-                        # Recalcula do zero para garantir consistência
-                        new_storage = 0
-                        for chunk_key in self.nodes[node_id].chunks_armazenados:
-                             if chunk_key in self.chunks:
-                                 new_storage += self.chunks[chunk_key].tamanho_chunk
-                        self.nodes[node_id].storage_usado = new_storage
-
                 self._save_metadata()
                 self.stats['operacoes_delete_total'] += 1
-                print(f"INFO: Metadados para '{nome_arquivo}' removidos com sucesso.")
+                print(f"INFO: Arquivo '{nome_arquivo}' marcado para deleção.")
                 return True
+                
         except Exception as e:
-            print(f"Erro ao remover arquivo {nome_arquivo}: {e}")
+            print(f"ERRO: Falha ao marcar arquivo para deleção: {e}")
             return False
     
     def register_chunk(self, chunk_metadata: ChunkMetadata) -> bool:
@@ -472,6 +451,160 @@ class MetadataManager:
                 'estatisticas': self.stats
             }
     
+    def _cleanup_deleted_files(self):
+        """
+        Thread de limpeza que varre periodicamente os metadados em busca de arquivos
+        marcados para deleção e tenta remover os chunks físicos dos nós.
+        """
+        while True:
+            try:
+                time.sleep(60)  # Executar a cada 60 segundos
+                
+                with self.lock:
+                    # Buscar arquivos marcados para deleção
+                    files_to_cleanup = [
+                        (nome, metadata) for nome, metadata in self.files.items()
+                        if getattr(metadata, 'status', 'ativo') == 'deletando'
+                    ]
+                
+                for nome_arquivo, file_metadata in files_to_cleanup:
+                    print(f"INFO: Iniciando limpeza do arquivo '{nome_arquivo}'")
+                    
+                    # Obter chunks do arquivo
+                    chunks_to_remove = self.get_chunk_locations(nome_arquivo)
+                    all_chunks_removed = True
+                    
+                    for chunk_metadata in chunks_to_remove:
+                        chunk_removed = self._try_remove_chunk_from_nodes(
+                            nome_arquivo, chunk_metadata.chunk_numero, chunk_metadata
+                        )
+                        if not chunk_removed:
+                            all_chunks_removed = False
+                    
+                    # Se todos os chunks foram removidos, apagar os registros de metadados
+                    if all_chunks_removed:
+                        with self.lock:
+                            # Remover chunks dos metadados
+                            chunk_keys_to_delete = [
+                                self._get_chunk_key(c.arquivo_nome, c.chunk_numero) 
+                                for c in chunks_to_remove
+                            ]
+                            for key in chunk_keys_to_delete:
+                                if key in self.chunks:
+                                    del self.chunks[key]
+                            
+                            # Remover arquivo dos metadados
+                            if nome_arquivo in self.files:
+                                del self.files[nome_arquivo]
+                            
+                            self._save_metadata()
+                            print(f"INFO: Arquivo '{nome_arquivo}' removido completamente do sistema")
+                    else:
+                        print(f"AVISO: Nem todos os chunks do arquivo '{nome_arquivo}' foram removidos. Tentativa será repetida.")
+                        
+            except Exception as e:
+                print(f"ERRO: Falha na thread de limpeza: {e}")
+    
+    def _try_remove_chunk_from_nodes(self, arquivo_nome: str, chunk_numero: int, 
+                                    chunk_metadata: ChunkMetadata) -> bool:
+        """
+        Tenta remover um chunk de todos os nós (primário e réplicas).
+        Retorna True se conseguiu remover de todos os nós disponíveis.
+        """
+        nodes_to_try = [chunk_metadata.no_primario] + chunk_metadata.nos_replicas
+        removal_success = True
+        
+        for node_id in nodes_to_try:
+            if node_id not in self.nodes:
+                continue
+                
+            node_info = self.nodes[node_id]
+            if node_info.status != "ATIVO":
+                print(f"AVISO: Nó {node_id} não está ativo. Chunk {arquivo_nome}:{chunk_numero} pode permanecer órfão.")
+                removal_success = False
+                continue
+            
+            try:
+                stub = self._get_storage_node_stub(node_info)
+                request = fs_pb2.ChunkRequest(
+                    arquivo_nome=arquivo_nome, 
+                    chunk_numero=chunk_numero
+                )
+                response = stub.DeleteChunk(request, timeout=10)
+                
+                if response.sucesso:
+                    print(f"INFO: Chunk {arquivo_nome}:{chunk_numero} removido do nó {node_id}")
+                    
+                    # Atualizar chunks_armazenados do nó
+                    chunk_key = f"{arquivo_nome}:{chunk_numero}"
+                    if chunk_key in node_info.chunks_armazenados:
+                        node_info.chunks_armazenados.remove(chunk_key)
+                        # Recalcular storage_usado
+                        node_info.storage_usado = max(0, node_info.storage_usado - chunk_metadata.tamanho_chunk)
+                else:
+                    print(f"AVISO: Falha ao remover chunk {arquivo_nome}:{chunk_numero} do nó {node_id}: {response.mensagem}")
+                    removal_success = False
+                    
+            except Exception as e:
+                print(f"ERRO: Exceção ao tentar remover chunk {arquivo_nome}:{chunk_numero} do nó {node_id}: {e}")
+                removal_success = False
+        
+        return removal_success
+    
+    def _garbage_collect_incomplete_uploads(self):
+        """
+        Thread de garbage collection que procura periodicamente por arquivos que foram
+        criados há um certo tempo mas que ainda não foram marcados como completos.
+        Remove chunks órfãos e registros de arquivos incompletos.
+        """
+        while True:
+            try:
+                time.sleep(300)  # Executar a cada 5 minutos
+                current_time = int(time.time())
+                timeout_threshold = 3600  # 1 hora em segundos
+                
+                with self.lock:
+                    # Buscar arquivos incompletos antigos
+                    incomplete_files = [
+                        (nome, metadata) for nome, metadata in self.files.items()
+                        if (not getattr(metadata, 'esta_completo', False) and 
+                            getattr(metadata, 'status', 'ativo') == 'ativo' and
+                            current_time - metadata.timestamp_criacao > timeout_threshold)
+                    ]
+                
+                for nome_arquivo, file_metadata in incomplete_files:
+                    print(f"INFO: Iniciando garbage collection do arquivo incompleto '{nome_arquivo}'")
+                    
+                    # Obter chunks do arquivo incompleto
+                    chunks_to_cleanup = self.get_chunk_locations(nome_arquivo)
+                    
+                    # Tentar remover chunks órfãos
+                    for chunk_metadata in chunks_to_cleanup:
+                        self._try_remove_chunk_from_nodes(
+                            nome_arquivo, chunk_metadata.chunk_numero, chunk_metadata
+                        )
+                    
+                    # Remover registros de metadados do arquivo incompleto
+                    with self.lock:
+                        # Remover chunks dos metadados
+                        chunk_keys_to_delete = [
+                            self._get_chunk_key(c.arquivo_nome, c.chunk_numero) 
+                            for c in chunks_to_cleanup
+                        ]
+                        for key in chunk_keys_to_delete:
+                            if key in self.chunks:
+                                del self.chunks[key]
+                        
+                        # Remover arquivo dos metadados
+                        if nome_arquivo in self.files:
+                            del self.files[nome_arquivo]
+                        
+                        self._save_metadata()
+                        print(f"INFO: Arquivo incompleto '{nome_arquivo}' removido pelo garbage collector")
+                        
+            except Exception as e:
+                print(f"ERRO: Falha na thread de garbage collection: {e}")
+
     def stop_monitoring(self):
         """Para o monitoramento de falhas (para testes)"""
         # Método placeholder para compatibilidade com testes
