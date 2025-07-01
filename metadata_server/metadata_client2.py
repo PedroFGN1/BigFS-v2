@@ -152,6 +152,21 @@ class MetadataClient:
             print(f"Erro na comunicação ao obter nó: {e}")
             return None
     
+    def get_available_nodes(self, apenas_ativos: bool = True) -> Optional[List[fs_pb2.NodeInfo]]:
+        """Obtém lista de nós disponíveis"""
+        try:
+            request = fs_pb2.NodesRequest(apenas_ativos=apenas_ativos)
+            response = self.stub.ObterNosDisponiveis(request)
+            
+            if response.sucesso:
+                return list(response.nos)
+            else:
+                print(f"Erro ao obter nós: {response.mensagem}")
+                return []
+        except Exception as e:
+            print(f"Erro na comunicação ao obter nós: {e}")
+            return []
+
     def get_available_replicas(self, arquivo_nome: str, chunk_numero: int, 
                               failed_node: str = "") -> Optional[object]:
         """Obtém réplicas disponíveis para um chunk"""
@@ -178,7 +193,7 @@ class MetadataClient:
         try:
             request = fs_pb2.NodeFailureRequest(
                 node_id=node_id,
-                reason=reason,
+                motivo_falha=reason,
                 timestamp=int(time.time())
             )
             

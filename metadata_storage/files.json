@@ -23,16 +23,28 @@
     "esta_completo": true,
     "status": "ativo"
   },
-  "video.mp4": {
-    "nome_arquivo": "video.mp4",
-    "tamanho_total": 37227098,
-    "total_chunks": 36,
-    "checksum_arquivo": "a7ce8367fe19fe8f8efd196ee1b93647",
-    "timestamp_criacao": 1751373002,
-    "timestamp_modificacao": 1751373002,
+  "filme.avi": {
+    "nome_arquivo": "filme.avi",
+    "tamanho_total": 941170688,
+    "total_chunks": 898,
+    "checksum_arquivo": "75c582e18e1f3fee21c02ec440e0edf7",
+    "timestamp_criacao": 1751388695,
+    "timestamp_modificacao": 1751388784,
+    "no_primario": "",
+    "nos_replicas": [],
+    "esta_completo": true,
+    "status": "ativo"
+  },
+  "filmme.avi": {
+    "nome_arquivo": "filmme.avi",
+    "tamanho_total": 941170688,
+    "total_chunks": 898,
+    "checksum_arquivo": "75c582e18e1f3fee21c02ec440e0edf7",
+    "timestamp_criacao": 1751383914,
+    "timestamp_modificacao": 1751385903,
     "no_primario": "",
     "nos_replicas": [],
     "esta_completo": false,
-    "status": "ativo"
+    "status": "deletando"
   }
 }
