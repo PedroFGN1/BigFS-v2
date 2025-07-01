@@ -1,0 +1,912 @@
+{
+  "test.txt:0": {
+    "arquivo_nome": "test.txt",
+    "chunk_numero": 0,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "a2e63ee01401aaeca78be023dfbb8c59",
+    "tamanho_chunk": 2,
+    "timestamp_criacao": 1751294640,
+    "disponivel": true
+  },
+  "nstest.mp4:0": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 0,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "213a5aca871af22f0115a46914d93ade",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:1": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 1,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "d91a9d2e1c431f08599fc259c8c21e42",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:2": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 2,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "7e616be7bf501acd3b73ab77e5f9dbbc",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:3": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 3,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "b1b3a1eff96bff66da6b92a8774068c5",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:4": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 4,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "8d9be65794f9e47b52082edac090e4df",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:5": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 5,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "ddd6526371b636636247dec607cf2920",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:6": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 6,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "850565f07e96a1246fbf672ae999efbd",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:7": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 7,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "edeeb3efeb095965a8438c3c724e5ec5",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:8": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 8,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "8d33a034bf5a486f1c6910ebb4eff32c",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:9": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 9,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "0629e1ffa8eb4179a1b43383900179cc",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:10": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 10,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "8dda08d09aab4e0eba0a795eb5b23616",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:11": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 11,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "98f0659039da4aaadce7bfddc1012ff0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:12": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 12,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "6bcd74a10fa83de0716b07bec33cb9c5",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:13": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 13,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "a5571b29c21dd64bd39ac1fb52db2e90",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:14": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 14,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "b0efbc6d2a931056ae01f2d9ebf9a9ea",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:15": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 15,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "4e5a911083a59f3184a5e81665a2fb08",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:16": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 16,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "2be77ecaad6b63c54ff56fb08f26c893",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:17": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 17,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "ff028a1020e9e69491db9c5077d54d24",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:18": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 18,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "38efc61125a6e6014af8778afd6592df",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:19": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 19,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "39613ff002ec3c8ba5b099d6d7c216af",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:20": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 20,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "60da45b2aa9787b42a430b5abdcb647c",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:21": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 21,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "188a9c5df709c84440d5fc544826e36f",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:22": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 22,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "f1a04ca7461c4c0b4af44a1b20feca96",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322193,
+    "disponivel": true
+  },
+  "nstest.mp4:23": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 23,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "526531cc108d0b1916e4e7bc20a055d4",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:24": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 24,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "18c40f71b84f318c8922de7f90fc7fff",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:25": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 25,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "0e32693f814678113f98e5534c8fce35",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:26": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 26,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "041738790ed54d3ad7a4fd1ee2929293",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:27": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 27,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "b731127f449e7c7c84cc069852f22176",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:28": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 28,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "01661978ae2329392010ae80b477a127",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:29": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 29,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "9239cc8ac8dee9301709d5e3873aeac5",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:30": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 30,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "1d87a290ad8ba61f774ecd25ec21e2cc",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:31": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 31,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "63abce43df02ecedef0267ad4a06d06c",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322194,
+    "disponivel": true
+  },
+  "nstest.mp4:32": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 32,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "d27261089adf08016fc6026457e19527",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:33": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 33,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "488c0681b3fe628bcb916a5fbce23f2e",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:34": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 34,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "cbfa5555405b5bd6d73a73a4c96904ef",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:35": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 35,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "5013a06468b1261cc0bf33457d138ce2",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:36": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 36,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "fe2f0610153366550fa4bfb609557f7b",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:37": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 37,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "d208cc4e589462093c5d64256efbd125",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:38": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 38,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "6e928c0c0617c563fc7726020d6cd245",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:39": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 39,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "96d38153b16058e84f85cdf042382e01",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:40": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 40,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "2fb0e514a2ee79a6973e3a0583d019ab",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:41": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 41,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "7567f931232e0e4e416c2b423085546d",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:42": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 42,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "05bfaa4ae297575fd0db22991c7c3775",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:43": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 43,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "01c5a72bdf3d73a82bbc3ea255f4853c",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:44": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 44,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "f1cd5bd34ee10498c8c603f5a5ed06a8",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:45": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 45,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "3377994a3bd35f678bbace9dba7285f5",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:46": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 46,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "46de2562333309c849dac4b6a19e3698",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:47": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 47,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "42228d9dd7ab815ac4af1d1360ff41c8",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:48": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 48,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "650f90e0b605609d6799bba177a99453",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:49": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 49,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "16fb6e4e29f8288cf69cafcb2746ba8d",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:50": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 50,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "933b16ce734d0134628e60357e0eb2ab",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:51": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 51,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "4e4a5bb15316199cf90cc03e11ccb22c",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:52": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 52,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "9aff43eaf4f11036aa1ecd9685e1ff73",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:53": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 53,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "c922cbba509386017f83159609af1f5b",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322195,
+    "disponivel": true
+  },
+  "nstest.mp4:54": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 54,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "d164f0fbe6462bd84d3382e23a4a34a0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:55": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 55,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "66b394c140394967f19172afa0b9e8f1",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:56": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 56,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "c080a1886a81ad2aaa847bad998564ef",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:57": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 57,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "5d68e209627dfb57cea92286801eff9b",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:58": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 58,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "a4ee622d6b4a7c6776e3c0c31069e80d",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:59": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 59,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "9dbf7bc0e111207ea292c916eeca64e1",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:60": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 60,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "66d161f15a11ae950000934f57c5ad6c",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:61": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 61,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "1dbc7e876d6e568770fca23169d6162a",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:62": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 62,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "9d79f2d0541648402cf3b48e60ea887d",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:63": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 63,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "600215a004fd424ccdfff52493cd71dc",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:64": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 64,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "1a990715e8ea4ee530648f6a4990c3f0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:65": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 65,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "cbd19c8cfe4a0975cb3c737cd15df3e5",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:66": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 66,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "dd01d807077aea70fe49859133ee36ee",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:67": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 67,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "38bfa99a236ef83408e4dbeac03ae9b8",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:68": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 68,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "51318f5d235b89a72900988863f3bd81",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322196,
+    "disponivel": true
+  },
+  "nstest.mp4:69": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 69,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "13b4bf029cbc9b18d062f5ded571129e",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:70": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 70,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "c4661a8bb2258c64202ee7362b6169f4",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:71": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 71,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "e0a25990cfa4a0864096010bdf883e9f",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:72": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 72,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "165261f3b74b11724f57585e385ffb3e",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:73": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 73,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "0c24a5b760c5de56bb2517828922331f",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:74": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 74,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "b8648ffdead8bbfc51561b46923deba7",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:75": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 75,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "0c20f9c40c31af52cc8d4bb48dbe2c90",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:76": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 76,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "0133d0fa8c0d526cd5c7f374fae922c7",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:77": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 77,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "062ffc712ed91bc7b8f85ba137b2538e",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:78": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 78,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "f722ad9e0756dd35d993b5a55617c5b2",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:79": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 79,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "9b036448e416bee15c896c0adad3c0b0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:80": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 80,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "a4726052ad4ebf72ccb4646790e5f23c",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:81": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 81,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "83ec134b253fb23a0f1124fdcaa7df01",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:82": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 82,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "6bce720ce2d72c0fc1df47dfc70338f7",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:83": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 83,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "86108d42eb8f7f135babe9b8ee66ff4a",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:84": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 84,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "b66e392df5fc80d8cf391751e0b94c2f",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:85": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 85,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "7ace557ace39919e9ff2487e693e02f1",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:86": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 86,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "2cb1c467f1de9f057d5a7fa6ee3120cb",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:87": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 87,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "bd24e7b9e1400afe45282c8653d16d27",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:88": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 88,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "31c5b6d3bf08ff8c0cdbb8162ff2c6d0",
+    "tamanho_chunk": 1048576,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  },
+  "nstest.mp4:89": {
+    "arquivo_nome": "nstest.mp4",
+    "chunk_numero": 89,
+    "no_primario": "node_1",
+    "nos_replicas": [],
+    "checksum": "fbe17ce76d42cf6c58051cb58581569d",
+    "tamanho_chunk": 994975,
+    "timestamp_criacao": 1751322197,
+    "disponivel": true
+  }
+}
