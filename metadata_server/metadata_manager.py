@@ -32,12 +32,18 @@ class FileMetadata:
     status: str = "ativo"  # ativo, deletando, completo
 
 @dataclass
+class ReplicaInfo:
+    """Informações sobre uma réplica com seu estado"""
+    node_id: str
+    status: str = "PENDING"  # PENDING, AVAILABLE, DELETING
+
+@dataclass
 class ChunkMetadata:
     """Metadados de um chunk específico"""
     arquivo_nome: str
     chunk_numero: int
     no_primario: str
-    nos_replicas: List[str]
+    replicas: List[ReplicaInfo]  # Lista de réplicas com seus estados
     checksum: str
     tamanho_chunk: int
     timestamp_criacao: int
@@ -120,6 +126,11 @@ class MetadataManager:
                 with open(chunks_path, 'r') as f:
                     chunks_data = json.load(f)
                     for key, data in chunks_data.items():
+                        # Converte a lista de dicionários de réplicas de volta para uma lista de objetos ReplicaInfo
+                        if 'replicas' in data and isinstance(data['replicas'], list):
+                            replicas_obj_list = [ReplicaInfo(**replica_dict) for replica_dict in data['replicas']]
+                            data['replicas'] = replicas_obj_list
+
                         self.chunks[key] = ChunkMetadata(**data)
             
             # Carregar nós
@@ -282,18 +293,25 @@ class MetadataManager:
                 )
                 
                 # Atualizar os metadados do chunk com as réplicas designadas
-                chunk_metadata.nos_replicas = replica_nodes
+                chunk_metadata.replicas = replica_nodes
                 
-                print(f"✅ Chunk {chunk_key} registrado - Primário: {primary_node_id}, Réplicas: {replica_nodes}")
+                replica_ids = [r.node_id for r in replica_nodes]
+                print(f"✅ Chunk {chunk_key} registrado - Primário: {primary_node_id}, Réplicas: {replica_ids} (PENDING)")
                 
                 # Salvar os metadados do chunk
                 self.chunks[chunk_key] = chunk_metadata
                 
                 # Atualizar informações dos nós
-                for node_id in [chunk_metadata.no_primario] + chunk_metadata.nos_replicas:
-                    if node_id in self.nodes:
-                        self.nodes[node_id].chunks_armazenados.add(chunk_key)
-                        self.nodes[node_id].storage_usado += chunk_metadata.tamanho_chunk
+                # Atualizar nó primário
+                if chunk_metadata.no_primario in self.nodes:
+                    self.nodes[chunk_metadata.no_primario].chunks_armazenados.add(chunk_key)
+                    self.nodes[chunk_metadata.no_primario].storage_usado += chunk_metadata.tamanho_chunk
+                
+                # Atualizar nós de réplicas
+                for replica_info in chunk_metadata.replicas:
+                    if replica_info.node_id in self.nodes:
+                        self.nodes[replica_info.node_id].chunks_armazenados.add(chunk_key)
+                        self.nodes[replica_info.node_id].storage_usado += chunk_metadata.tamanho_chunk
                 
                 self._save_metadata()
                 return True
@@ -302,7 +320,7 @@ class MetadataManager:
             return False
     
     def _select_replica_nodes_for_chunk(self, arquivo_nome: str, chunk_numero: int, 
-                                       exclude_node: str, num_replicas: int = 2) -> List[str]:
+                                       exclude_node: str, num_replicas: int = 2) -> List[ReplicaInfo]:
         """Seleciona nós para réplicas de um chunk, excluindo o nó primário"""
         with self.lock:
             active_nodes = [node_id for node_id, node in self.nodes.items() 
@@ -319,9 +337,50 @@ class MetadataManager:
             selected_replicas = []
             for i in range(min(num_replicas, len(active_nodes))):
                 replica_index = (hash_value + i) % len(active_nodes)
-                selected_replicas.append(active_nodes[replica_index])
+                replica_info = ReplicaInfo(
+                    node_id=active_nodes[replica_index],
+                    status="PENDING"  # Inicialmente PENDING
+                )
+                selected_replicas.append(replica_info)
             
             return selected_replicas
+    
+    def confirmar_replica(self, arquivo_nome: str, chunk_numero: int, replica_id: str) -> bool:
+        """Confirma que uma réplica foi criada com sucesso, mudando seu status para AVAILABLE"""
+        try:
+            with self.lock:
+                chunk_key = self._get_chunk_key(arquivo_nome, chunk_numero)
+                
+                if chunk_key not in self.chunks:
+                    print(f"❌ Chunk {chunk_key} não encontrado para confirmação de réplica")
+                    return False
+                
+                chunk_metadata = self.chunks[chunk_key]
+                
+                # Procurar a réplica na lista e atualizar seu status
+                replica_found = False
+                for replica_info in chunk_metadata.replicas:
+                    if replica_info.node_id == replica_id:
+                        if replica_info.status == "PENDING":
+                            replica_info.status = "AVAILABLE"
+                            replica_found = True
+                            print(f"✅ Réplica {replica_id} confirmada para chunk {chunk_key}")
+                            break
+                        else:
+                            print(f"⚠️ Réplica {replica_id} já está no status {replica_info.status}")
+                            return True  # Já confirmada
+                
+                if not replica_found:
+                    print(f"❌ Réplica {replica_id} não encontrada para chunk {chunk_key}")
+                    return False
+                
+                # Salvar metadados atualizados
+                self._save_metadata()
+                return True
+                
+        except Exception as e:
+            print(f"❌ Erro ao confirmar réplica {replica_id} para chunk {arquivo_nome}:{chunk_numero}: {e}")
+            return False
     
     def get_chunk_locations(self, nome_arquivo: str) -> List[ChunkMetadata]:
         """Obtém localização de todos os chunks de um arquivo"""
@@ -430,7 +489,7 @@ class MetadataManager:
                         return self.nodes[chunk_metadata.no_primario]
                     
                     # Tentar réplicas
-                    for replica_id in chunk_metadata.nos_replicas:
+                    for replica_id in chunk_metadata.replicas:
                         if (replica_id in self.nodes and 
                             self.nodes[replica_id].status == "ATIVO"):
                             return self.nodes[replica_id]
@@ -462,7 +521,7 @@ class MetadataManager:
                 available_replicas.append(self.nodes[chunk_metadata.no_primario])
             
             # Verificar réplicas
-            for replica_id in chunk_metadata.nos_replicas:
+            for replica_id in chunk_metadata.replicas:
                 if (replica_id != failed_node and 
                     replica_id in self.nodes and
                     self.nodes[replica_id].status == "ATIVO"):
@@ -496,6 +555,10 @@ class MetadataManager:
         """
         Thread de limpeza que varre periodicamente os metadados em busca de arquivos
         marcados para deleção e tenta remover os chunks físicos dos nós.
+        
+        NOVA IMPLEMENTAÇÃO: Limpeza em duas fases
+        1. Fase de Marcação: Marca todas as réplicas AVAILABLE como DELETING
+        2. Fase de Deleção Física: Remove chunks físicos dos nós
         """
         while True:
             try:
@@ -513,6 +576,11 @@ class MetadataManager:
                     
                     # Obter chunks do arquivo
                     chunks_to_remove = self.get_chunk_locations(nome_arquivo)
+                    
+                    # FASE 1: MARCAÇÃO - Marcar réplicas AVAILABLE como DELETING
+                    self._mark_replicas_for_deletion(chunks_to_remove)
+                    
+                    # FASE 2: DELEÇÃO FÍSICA - Remover chunks físicos
                     all_chunks_removed = True
                     
                     for chunk_metadata in chunks_to_remove:
@@ -546,51 +614,123 @@ class MetadataManager:
             except Exception as e:
                 print(f"ERRO: Falha na thread de limpeza: {e}")
     
+    def _mark_replicas_for_deletion(self, chunks_to_remove: List[ChunkMetadata]):
+        """
+        FASE 1: Marca todas as réplicas AVAILABLE como DELETING para impedir novos acessos
+        """
+        with self.lock:
+            for chunk_metadata in chunks_to_remove:
+                for replica_info in chunk_metadata.replicas:
+                    if replica_info.status == "AVAILABLE":
+                        replica_info.status = "DELETING"
+                        print(f"INFO: Réplica {replica_info.node_id} marcada como DELETING para chunk {chunk_metadata.arquivo_nome}:{chunk_metadata.chunk_numero}")
+            
+            # Salvar as alterações de status
+            self._save_metadata()
+    
     def _try_remove_chunk_from_nodes(self, arquivo_nome: str, chunk_numero: int, 
                                     chunk_metadata: ChunkMetadata) -> bool:
         """
         Tenta remover um chunk de todos os nós (primário e réplicas).
+        
+        NOVA IMPLEMENTAÇÃO:
+        - Sempre tenta apagar a cópia do nó primário
+        - Para réplicas, só tenta apagar se o status for DELETING
+        - Implementa heurística do timestamp para nós com heartbeat recente
+        
         Retorna True se conseguiu remover de todos os nós disponíveis.
         """
-        nodes_to_try = [chunk_metadata.no_primario] + chunk_metadata.nos_replicas
         removal_success = True
         
-        for node_id in nodes_to_try:
-            if node_id not in self.nodes:
-                continue
-                
-            node_info = self.nodes[node_id]
-            if node_info.status != "ATIVO":
-                print(f"AVISO: Nó {node_id} não está ativo. Chunk {arquivo_nome}:{chunk_numero} pode permanecer órfão.")
+        # 1. SEMPRE tentar remover do nó primário
+        primary_node_id = chunk_metadata.no_primario
+        if primary_node_id in self.nodes:
+            primary_removed = self._try_remove_chunk_from_single_node(
+                arquivo_nome, chunk_numero, chunk_metadata, primary_node_id, is_primary=True
+            )
+            if not primary_removed:
                 removal_success = False
-                continue
-            
-            try:
-                stub = self._get_storage_node_stub(node_info)
-                request = fs_pb2.ChunkRequest(
-                    arquivo_nome=arquivo_nome, 
-                    chunk_numero=chunk_numero
+        else:
+            print(f"AVISO: Nó primário {primary_node_id} não encontrado nos metadados")
+        
+        # 2. Para réplicas, verificar status primeiro
+        for replica_info in chunk_metadata.replicas:
+            if replica_info.status == "DELETING":
+                # Só tentar apagar réplicas em estado DELETING
+                replica_removed = self._try_remove_chunk_from_single_node(
+                    arquivo_nome, chunk_numero, chunk_metadata, replica_info.node_id, is_primary=False
                 )
-                response = stub.DeleteChunk(request, timeout=10)
-                
-                if response.sucesso:
-                    print(f"INFO: Chunk {arquivo_nome}:{chunk_numero} removido do nó {node_id}")
-                    
-                    # Atualizar chunks_armazenados do nó
-                    chunk_key = f"{arquivo_nome}:{chunk_numero}"
-                    if chunk_key in node_info.chunks_armazenados:
-                        node_info.chunks_armazenados.remove(chunk_key)
-                        # Recalcular storage_usado
-                        node_info.storage_usado = max(0, node_info.storage_usado - chunk_metadata.tamanho_chunk)
-                else:
-                    print(f"AVISO: Falha ao remover chunk {arquivo_nome}:{chunk_numero} do nó {node_id}: {response.mensagem}")
+                if not replica_removed:
                     removal_success = False
-                    
-            except Exception as e:
-                print(f"ERRO: Exceção ao tentar remover chunk {arquivo_nome}:{chunk_numero} do nó {node_id}: {e}")
-                removal_success = False
+            elif replica_info.status in ["PENDING", "AVAILABLE"]:
+                # Ignorar réplicas que não estão marcadas para deleção
+                print(f"INFO: Ignorando réplica {replica_info.node_id} com status {replica_info.status}")
         
         return removal_success
+    
+    def _try_remove_chunk_from_single_node(self, arquivo_nome: str, chunk_numero: int, 
+                                          chunk_metadata: ChunkMetadata, node_id: str, 
+                                          is_primary: bool = False) -> bool:
+        """
+        Tenta remover um chunk de um único nó com heurística do timestamp
+        """
+        if node_id not in self.nodes:
+            print(f"AVISO: Nó {node_id} não encontrado nos metadados")
+            return False
+            
+        node_info = self.nodes[node_id]
+        if node_info.status != "ATIVO":
+            print(f"AVISO: Nó {node_id} não está ativo. Chunk {arquivo_nome}:{chunk_numero} pode permanecer órfão.")
+            return False
+        
+        try:
+            stub = self._get_storage_node_stub(node_info)
+            request = fs_pb2.ChunkRequest(
+                arquivo_nome=arquivo_nome, 
+                chunk_numero=chunk_numero
+            )
+            response = stub.DeleteChunk(request, timeout=10)
+            
+            if response.sucesso:
+                node_type = "primário" if is_primary else "réplica"
+                print(f"INFO: Chunk {arquivo_nome}:{chunk_numero} removido do nó {node_type} {node_id}")
+                
+                # Atualizar chunks_armazenados do nó
+                chunk_key = f"{arquivo_nome}:{chunk_numero}"
+                if chunk_key in node_info.chunks_armazenados:
+                    node_info.chunks_armazenados.remove(chunk_key)
+                    # Recalcular storage_usado
+                    node_info.storage_usado = max(0, node_info.storage_usado - chunk_metadata.tamanho_chunk)
+                
+                return True
+            else:
+                mensagem_erro = response.mensagem.lower()
+                # HEURÍSTICA DO TIMESTAMP: Se erro é "arquivo não encontrado" e heartbeat é recente
+                # Se heartbeat foi há menos de 2 minutos (120 segundos), considerar como sucesso
+                if "encontrado" in mensagem_erro:
+                    current_time = int(time.time())
+                    time_since_heartbeat = current_time - node_info.ultimo_heartbeat
+                    
+                    if time_since_heartbeat < 120: # 2 minutos
+                        node_type = "primário" if is_primary else "réplica"
+                        print(f"INFO: Chunk {arquivo_nome}:{chunk_numero} já não existe no nó {node_type} {node_id} (heartbeat recente)")
+                        
+                        chunk_key = f"{arquivo_nome}:{chunk_numero}"
+                        if chunk_key in node_info.chunks_armazenados:
+                            node_info.chunks_armazenados.remove(chunk_key)
+                            node_info.storage_usado = max(0, node_info.storage_usado - chunk_metadata.tamanho_chunk)
+                        
+                        return True # A heurística foi aplicada, consideramos um sucesso.
+                
+                # Se a heurística não se aplica, é uma falha real.
+                node_type = "primário" if is_primary else "réplica"
+                print(f"AVISO: Falha ao remover chunk {arquivo_nome}:{chunk_numero} do nó {node_type} {node_id}: {response.mensagem}")
+                return False
+                
+        except Exception as e:
+            node_type = "primário" if is_primary else "réplica"
+            print(f"ERRO: Exceção ao tentar remover chunk {arquivo_nome}:{chunk_numero} do nó {node_type} {node_id}: {e}")
+            return False
     
     def _garbage_collect_incomplete_uploads(self):
         """

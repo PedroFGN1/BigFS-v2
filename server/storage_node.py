@@ -218,7 +218,6 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 }
                 
                 sucesso_salvar = salvar_metadata_chunk(self.base_dir, arquivo_nome, 0, metadata)
-                
                 if not sucesso_salvar:
                     return fs_pb2.OperacaoResponse(sucesso=False, mensagem="Falha ao salvar arquivo no disco.")
                 
@@ -535,17 +534,17 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
             
             # Consultar o MetadataServer para obter a lista de nós de réplica
             chunk_info = self.metadata_client.get_chunk_info(arquivo_nome, chunk_numero)
-            if not chunk_info or not hasattr(chunk_info, 'nos_replicas'):
+            if not chunk_info or not hasattr(chunk_info, 'replicas'):
                 print(f"Nenhum nó de réplica encontrado para {arquivo_nome}:{chunk_numero}")
                 return
             
-            nos_replicas = chunk_info.nos_replicas
-            if not nos_replicas:
+            nos_replica = chunk_info.replicas
+            if not nos_replica:
                 print(f"Lista de nós de réplica vazia para {arquivo_nome}:{chunk_numero}")
                 return
             
             # Conectar a cada nó de réplica e enviar o chunk
-            for replica_node_id in nos_replicas:
+            for replica_node_id in nos_replica:
                 try:
                     print(f"Replicando chunk para nó {replica_node_id}")
                     
@@ -576,6 +575,18 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                     
                     if response.sucesso:
                         print(f"Réplica enviada com sucesso para {replica_node_id}")
+                        
+                        # Confirmar réplica no servidor de metadados
+                        try:
+                            confirmacao_sucesso = self.metadata_client.confirmar_replica(
+                                arquivo_nome, chunk_numero, replica_node_id
+                            )
+                            if confirmacao_sucesso:
+                                print(f"✅ Réplica {replica_node_id} confirmada no servidor de metadados")
+                            else:
+                                print(f"⚠️ Falha ao confirmar réplica {replica_node_id} no servidor de metadados")
+                        except Exception as e:
+                            print(f"❌ Erro ao confirmar réplica {replica_node_id}: {e}")
                     else:
                         print(f"Erro ao enviar réplica para {replica_node_id}: {response.mensagem}")
                     

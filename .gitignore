@@ -1,11 +1,9 @@
 /.conda
 /.venv
 /.vscode
-/proto/tests
 /server/__pycache__
 /proto/__pycache__
 /.pytest_cache
-/tests
 InTheEnd.mp4
 /images
 /function-obsolates

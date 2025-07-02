@@ -95,14 +95,14 @@ class MetadataClient:
             return False
     
     def register_chunk(self, arquivo_nome: str, chunk_numero: int, no_primario: str,
-                      nos_replicas: list, checksum: str, tamanho_chunk: int) -> bool:
+                      replicas: list, checksum: str, tamanho_chunk: int) -> bool:
         """Registra um chunk no sistema"""
         try:
             request = fs_pb2.ChunkMetadataRequest(
                 arquivo_nome=arquivo_nome,
                 chunk_numero=chunk_numero,
                 no_primario=no_primario,
-                nos_replicas=nos_replicas,
+                replicas=replicas,
                 checksum=checksum,
                 tamanho_chunk=tamanho_chunk,
                 timestamp_criacao=int(time.time())
@@ -381,6 +381,27 @@ class MetadataClient:
         except Exception as e:
             print(f"Erro de comunicação ao buscar informações do nó '{node_id}': {e}")
             return None
+    
+    def confirmar_replica(self, arquivo_nome: str, chunk_numero: int, replica_id: str) -> bool:
+        """Confirma que uma réplica foi criada com sucesso"""
+        try:
+            request = fs_pb2.ConfirmReplicaRequest(
+                arquivo_nome=arquivo_nome,
+                chunk_numero=chunk_numero,
+                replica_id=replica_id
+            )
+            response = self.stub.ConfirmarReplica(request)
+            
+            if response.sucesso:
+                print(f"✅ Réplica {replica_id} confirmada para chunk {arquivo_nome}:{chunk_numero}")
+                return True
+            else:
+                print(f"❌ Falha ao confirmar réplica {replica_id}: {response.mensagem}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Erro ao confirmar réplica {replica_id} para chunk {arquivo_nome}:{chunk_numero}: {e}")
+            return False
 
 class HeartbeatSender:
     """Classe para envio de heartbeats periódicos ao servidor de metadados"""

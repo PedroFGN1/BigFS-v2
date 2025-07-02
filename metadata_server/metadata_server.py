@@ -119,7 +119,7 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 arquivo_nome=request.arquivo_nome,
                 chunk_numero=request.chunk_numero,
                 no_primario=request.no_primario,
-                nos_replicas=list(request.nos_replicas),
+                replicas=request.replicas,  # Lista de ReplicaInfo
                 checksum=request.checksum,
                 tamanho_chunk=request.tamanho_chunk,
                 timestamp_criacao=request.timestamp_criacao,
@@ -146,10 +146,29 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
             
             chunks_pb = []
             for chunk_metadata in chunks_metadata:
+
+                # Precisamos de "traduzir" a nossa lista de dataclasses ReplicaInfo
+                # para uma lista de objetos gRPC ReplicaInfo.
+                
+                # Obter o objeto NodeInfo completo para o nó primário
+                primary_node_info_obj = self.metadata_manager.get_node_by_id(chunk_metadata.no_primario)
+                
+                # Construir a lista de réplicas no formato esperado pelo gRPC
+                replicas_pb = []
+                # Iterar sobre a lista de dataclasses ReplicaInfo
+                for replica_info_dataclass in chunk_metadata.replicas:
+                    # Converter a dataclass para o objeto gRPC
+                    replica_info_pb = fs_pb2.ReplicaInfo(
+                        node_id=replica_info_dataclass.node_id,
+                        status=fs_pb2.ReplicaStatus.Value(replica_info_dataclass.status)
+                    )
+                    replicas_pb.append(replica_info_pb)
+
+
                 chunk_location = fs_pb2.ChunkLocation(
                     chunk_numero=chunk_metadata.chunk_numero,
                     no_primario=chunk_metadata.no_primario,
-                    nos_replicas=chunk_metadata.nos_replicas,
+                    replicas=replicas_pb,
                     checksum=chunk_metadata.checksum,
                     tamanho_chunk=chunk_metadata.tamanho_chunk,
                     disponivel=chunk_metadata.disponivel
@@ -451,7 +470,7 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 chunk_location_pb = fs_pb2.ChunkLocation(
                     chunk_numero=chunk_metadata.chunk_numero,
                     no_primario=chunk_metadata.no_primario,
-                    nos_replicas=chunk_metadata.nos_replicas,
+                    replicas=chunk_metadata.replicas,
                     checksum=chunk_metadata.checksum,
                     tamanho_chunk=chunk_metadata.tamanho_chunk,
                     disponivel=chunk_metadata.disponivel
@@ -492,6 +511,31 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 return fs_pb2.NodeInfoResponse(sucesso=False, mensagem=f"Nó com ID '{request.node_id}' não encontrado.")
         except Exception as e:
             return fs_pb2.NodeInfoResponse(sucesso=False, mensagem=f"Erro interno: {str(e)}")
+    
+    def ConfirmarReplica(self, request, context):
+        """Confirma que uma réplica foi criada com sucesso"""
+        try:
+            sucesso = self.metadata_manager.confirmar_replica(
+                request.arquivo_nome,
+                request.chunk_numero,
+                request.replica_id
+            )
+            
+            if sucesso:
+                return fs_pb2.OperacaoResponse(
+                    sucesso=True,
+                    mensagem=f"Réplica {request.replica_id} confirmada para chunk {request.chunk_numero}"
+                )
+            else:
+                return fs_pb2.OperacaoResponse(
+                    sucesso=False,
+                    mensagem=f"Falha ao confirmar réplica {request.replica_id}"
+                )
+        except Exception as e:
+            return fs_pb2.OperacaoResponse(
+                sucesso=False,
+                mensagem=f"Erro interno ao confirmar réplica: {str(e)}"
+            )
 
 def serve(port=50052, data_dir="metadata_storage"):
     """Inicia o servidor de metadados"""

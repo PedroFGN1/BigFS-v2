@@ -717,6 +717,11 @@ class MetadataServiceStub(object):
                 request_serializer=proto_dot_filesystem__extended__pb2.ReplicaRequest.SerializeToString,
                 response_deserializer=proto_dot_filesystem__extended__pb2.ReplicaResponse.FromString,
                 _registered_method=True)
+        self.ConfirmarReplica = channel.unary_unary(
+                '/filesystem.MetadataService/ConfirmarReplica',
+                request_serializer=proto_dot_filesystem__extended__pb2.ConfirmReplicaRequest.SerializeToString,
+                response_deserializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
+                _registered_method=True)
         self.ProcessarHeartbeat = channel.unary_unary(
                 '/filesystem.MetadataService/ProcessarHeartbeat',
                 request_serializer=proto_dot_filesystem__extended__pb2.HeartbeatData.SerializeToString,
@@ -827,6 +832,13 @@ class MetadataServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ConfirmarReplica(self, request, context):
+        """Confirmação de réplicas
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def ProcessarHeartbeat(self, request, context):
         """Monitoramento e saúde
         """
@@ -917,6 +929,11 @@ def add_MetadataServiceServicer_to_server(servicer, server):
                     servicer.ObterReplicasDisponiveis,
                     request_deserializer=proto_dot_filesystem__extended__pb2.ReplicaRequest.FromString,
                     response_serializer=proto_dot_filesystem__extended__pb2.ReplicaResponse.SerializeToString,
+            ),
+            'ConfirmarReplica': grpc.unary_unary_rpc_method_handler(
+                    servicer.ConfirmarReplica,
+                    request_deserializer=proto_dot_filesystem__extended__pb2.ConfirmReplicaRequest.FromString,
+                    response_serializer=proto_dot_filesystem__extended__pb2.OperacaoResponse.SerializeToString,
             ),
             'ProcessarHeartbeat': grpc.unary_unary_rpc_method_handler(
                     servicer.ProcessarHeartbeat,
@@ -1335,6 +1352,33 @@ class MetadataService(object):
             '/filesystem.MetadataService/ObterReplicasDisponiveis',
             proto_dot_filesystem__extended__pb2.ReplicaRequest.SerializeToString,
             proto_dot_filesystem__extended__pb2.ReplicaResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ConfirmarReplica(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filesystem.MetadataService/ConfirmarReplica',
+            proto_dot_filesystem__extended__pb2.ConfirmReplicaRequest.SerializeToString,
+            proto_dot_filesystem__extended__pb2.OperacaoResponse.FromString,
             options,
             channel_credentials,
             insecure,

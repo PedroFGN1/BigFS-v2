@@ -56,6 +56,9 @@ service MetadataService {
   rpc ObterNoParaOperacao (OperationRequest) returns (NodeResponse);
   rpc ObterReplicasDisponiveis (ReplicaRequest) returns (ReplicaResponse);
   
+  // Confirmação de réplicas
+  rpc ConfirmarReplica (ConfirmReplicaRequest) returns (OperacaoResponse);
+  
   // Monitoramento e saúde
   rpc ProcessarHeartbeat (HeartbeatData) returns (OperacaoResponse);
   rpc ObterStatusSistema (StatusRequest) returns (StatusResponse);
@@ -177,6 +180,29 @@ enum NodeStatus {
   FALHA = 3;
 }
 
+// Estados do ciclo de vida das réplicas
+enum ReplicaStatus {
+  PENDING = 0;     // Réplica designada mas ainda não confirmada
+  AVAILABLE = 1;   // Réplica confirmada e disponível para leitura
+  DELETING = 2;    // Réplica marcada para deleção
+}
+
+// ========================================
+// MENSAGENS PARA CONFIRMAÇÃO DE RÉPLICAS
+// ========================================
+
+message ConfirmReplicaRequest {
+  string arquivo_nome = 1;
+  int32 chunk_numero = 2;
+  string replica_id = 3;      // ID do nó que confirmou a réplica
+}
+
+// Informações sobre uma réplica com seu estado
+message ReplicaInfo {
+  string node_id = 1;
+  ReplicaStatus status = 2;
+}
+
 // ========================================
 // MENSAGENS PARA VERIFICAÇÃO DE INTEGRIDADE
 // ========================================
@@ -234,7 +260,7 @@ message ChunkMetadataRequest {
   string arquivo_nome = 1;
   int32 chunk_numero = 2;
   string no_primario = 3;
-  repeated string nos_replicas = 4;
+  repeated string replicas = 4;
   string checksum = 5;
   int64 tamanho_chunk = 6;
   int64 timestamp_criacao = 7;
@@ -255,7 +281,7 @@ message ChunkMetadataResponse {
 message ChunkLocation {
   int32 chunk_numero = 1;
   string no_primario = 2;
-  repeated string nos_replicas = 3;
+  repeated ReplicaInfo replicas = 3;  // Lista de réplicas com seus estados
   string checksum = 4;
   int64 tamanho_chunk = 5;
   bool disponivel = 6;

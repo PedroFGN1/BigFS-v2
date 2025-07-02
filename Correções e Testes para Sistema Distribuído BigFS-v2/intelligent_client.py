@@ -62,7 +62,7 @@ class IntelligentChunkUploader:
                 })
 
             # Obter os NodeInfo completos das réplicas
-            for replica_id in chunk_info.replicas:
+            for replica_id in chunk_info.nos_replicas:
                 if replica_id in self.node_map:
                     replica_node = self.node_map[replica_id]
                     node_list.append({
@@ -180,7 +180,7 @@ class IntelligentChunkDownloader:
                     'checksum': chunk_info.checksum
                 })
 
-            for replica_id in chunk_info.replicas:
+            for replica_id in chunk_info.nos_replicas:
                 if replica_id in self.node_map:
                     replica_node = self.node_map[replica_id]
                     node_list.append({
@@ -517,7 +517,7 @@ class AdvancedBigFSClient:
                 chunk_location = type('ChunkLocation', (), {
                     'chunk_numero': chunk_numero,
                     'no_primario': primary_node_id,
-                    'replicas': [],
+                    'nos_replicas': [],
                     'checksum': checksum
                 })()
                 chunk_locations_map[chunk_numero] = chunk_location
