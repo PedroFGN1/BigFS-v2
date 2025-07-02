@@ -130,7 +130,13 @@ class MetadataManager:
                         if 'replicas' in data and isinstance(data['replicas'], list):
                             replicas_obj_list = [ReplicaInfo(**replica_dict) for replica_dict in data['replicas']]
                             data['replicas'] = replicas_obj_list
+                        else:
+                            # Garante que o campo 'replicas' exista mesmo que vazio
+                            data['replicas'] = []
 
+                        # Remove o campo antigo se ele ainda existir no JSON por acidente
+                        data.pop('nos_replicas', None)
+                        
                         self.chunks[key] = ChunkMetadata(**data)
             
             # Carregar nós

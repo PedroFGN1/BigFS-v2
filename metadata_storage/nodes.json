@@ -6,7 +6,7 @@
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751474214,
+    "ultimo_heartbeat": 1751481850,
     "chunks_armazenados": []
   },
   "node_2": {
@@ -16,7 +16,7 @@
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751474214,
+    "ultimo_heartbeat": 1751481850,
     "chunks_armazenados": []
   },
   "node_3": {
@@ -26,7 +26,7 @@
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751474215,
+    "ultimo_heartbeat": 1751481852,
     "chunks_armazenados": []
   },
   "node_4": {
@@ -36,7 +36,7 @@
     "status": "ATIVO",
     "capacidade_storage": 10737418240,
     "storage_usado": 0,
-    "ultimo_heartbeat": 1751474219,
+    "ultimo_heartbeat": 1751481856,
     "chunks_armazenados": []
   }
 }

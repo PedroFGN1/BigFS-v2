@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'p
 
 import filesystem_extended_pb2 as fs_pb2
 import filesystem_extended_pb2_grpc as fs_grpc
-from metadata_manager import MetadataManager, FileMetadata, ChunkMetadata, NodeInfo
+from metadata_manager import MetadataManager, FileMetadata, ChunkMetadata, NodeInfo, ReplicaInfo
 
 class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
     """Implementação do serviço de metadados"""
@@ -160,6 +160,7 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                     # Converter a dataclass para o objeto gRPC
                     replica_info_pb = fs_pb2.ReplicaInfo(
                         node_id=replica_info_dataclass.node_id,
+                        # Converte a string de status para o valor do enum gRPC
                         status=fs_pb2.ReplicaStatus.Value(replica_info_dataclass.status)
                     )
                     replicas_pb.append(replica_info_pb)
@@ -464,13 +465,16 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 request.arquivo_nome,
                 request.chunk_numero
             )
-            
+
             if chunk_metadata:
+                # Traduzir a lista de réplicas para o formato do protocolo
+                replica_ids = [replica for replica in chunk_metadata.replicas]
+
                 # Converte o objeto ChunkMetadata do dataclass para o objeto ChunkLocation do protobuf
                 chunk_location_pb = fs_pb2.ChunkLocation(
                     chunk_numero=chunk_metadata.chunk_numero,
                     no_primario=chunk_metadata.no_primario,
-                    replicas=chunk_metadata.replicas,
+                    replicas=replica_ids,
                     checksum=chunk_metadata.checksum,
                     tamanho_chunk=chunk_metadata.tamanho_chunk,
                     disponivel=chunk_metadata.disponivel
