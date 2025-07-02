@@ -208,6 +208,20 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                 if not sucesso_salvar:
                     return fs_pb2.OperacaoResponse(sucesso=False, mensagem="Falha ao salvar arquivo no disco.")
                 
+                # Salvar metadados locais do chunk
+                metadata = {
+                    'arquivo_nome': arquivo_nome,
+                    'chunk_numero': 0,
+                    'checksum': calcular_checksum(dados),
+                    'tamanho': len(dados),
+                    'timestamp': int(time.time())
+                }
+                
+                sucesso_salvar = salvar_metadata_chunk(self.base_dir, arquivo_nome, 0, metadata)
+                
+                if not sucesso_salvar:
+                    return fs_pb2.OperacaoResponse(sucesso=False, mensagem="Falha ao salvar arquivo no disco.")
+                
                 # Registre esse único chunk no servidor de metadados.
                 checksum_chunk = calcular_checksum(dados)
                 sucesso_registro = self.metadata_client.register_chunk(
@@ -414,6 +428,26 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                     metadata
                 )
                 
+                # NOVA ARQUITETURA: Registrar chunk no servidor de metadados
+                if self.metadata_client:
+                    try:
+                        registro_sucesso = self.metadata_client.register_chunk(
+                            request.arquivo_nome,
+                            request.chunk_numero,
+                            self.node_id,  # Este nó como primário
+                            [],  # Réplicas serão designadas pelo servidor
+                            request.checksum,
+                            len(request.dados)
+                        )
+                        
+                        if not registro_sucesso:
+                            print(f"⚠️ Falha ao registrar chunk {request.chunk_numero} no servidor de metadados")
+                            # Não falhar o upload por isso, mas logar o problema
+                        else:
+                            print(f"✅ Chunk {request.chunk_numero} registrado no servidor de metadados")
+                    except Exception as e:
+                        print(f"❌ Erro ao registrar chunk no servidor de metadados: {e}")
+                
                 # Atualizar heartbeat
                 if self.heartbeat_sender:
                     chunks_atuais = set(listar_chunks_armazenados(self.base_dir))
@@ -501,17 +535,17 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
             
             # Consultar o MetadataServer para obter a lista de nós de réplica
             chunk_info = self.metadata_client.get_chunk_info(arquivo_nome, chunk_numero)
-            if not chunk_info or not hasattr(chunk_info, 'nos_replica'):
+            if not chunk_info or not hasattr(chunk_info, 'nos_replicas'):
                 print(f"Nenhum nó de réplica encontrado para {arquivo_nome}:{chunk_numero}")
                 return
             
-            nos_replica = chunk_info.nos_replica
-            if not nos_replica:
+            nos_replicas = chunk_info.nos_replicas
+            if not nos_replicas:
                 print(f"Lista de nós de réplica vazia para {arquivo_nome}:{chunk_numero}")
                 return
             
             # Conectar a cada nó de réplica e enviar o chunk
-            for replica_node_id in nos_replica:
+            for replica_node_id in nos_replicas:
                 try:
                     print(f"Replicando chunk para nó {replica_node_id}")
                     

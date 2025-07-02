@@ -194,7 +194,7 @@ class MetadataClient:
             request = fs_pb2.NodeFailureRequest(
                 node_id=node_id,
                 motivo_falha=reason,
-                timestamp=int(time.time())
+                timestamp_falha=int(time.time())
             )
             
             response = self.stub.ReportarFalhaNo(request)

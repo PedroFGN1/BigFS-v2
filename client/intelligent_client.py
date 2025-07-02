@@ -87,33 +87,39 @@ class IntelligentChunkUploader:
             result.erro = f"Informações de localização não encontradas para o chunk {chunk_numero}"
             return result
 
-        node_list = self._get_chunk_node_list(chunk_info)
-        if not node_list:
-            result.erro = f"Nenhum nó disponível encontrado para o chunk {chunk_numero}"
+        # Usar apenas o nó primário designado pelo plano de distribuição
+        primary_node_id = chunk_info.no_primario
+        if primary_node_id not in self.node_map:
+            result.erro = f"Nó primário {primary_node_id} não encontrado no mapa de nós"
             return result
         
-        # ... (O resto da lógica de retry permanece a mesma) ...
-        for tentativa, node_info in enumerate(node_list):
-            result.tentativas = tentativa + 1
+        primary_node = self.node_map[primary_node_id]
+        node_info = {
+            'node_id': primary_node.node_id,
+            'endereco': primary_node.endereco,
+            'porta': primary_node.porta,
+            'tipo': 'primario'
+        }
+        
+        # Tentar upload no nó primário designado
+        try:
+            sucesso, erro = self._attempt_chunk_upload(
+                arquivo_nome, chunk_numero, chunk_data, checksum, node_info
+            )
             
-            try:
-                sucesso, erro = self._attempt_chunk_upload(
-                    arquivo_nome, chunk_numero, chunk_data, checksum, node_info
-                )
+            if sucesso:
+                result.sucesso = True
+                result.node_usado = node_info['node_id']
+                print(f"✅ Chunk {chunk_numero} enviado para {node_info['node_id']} (primário designado)")
+                return result
+            else:
+                result.erro = erro
+                print(f"❌ Falha ao enviar chunk {chunk_numero} para nó primário {node_info['node_id']}: {erro}")
+                self._report_node_failure(node_info['node_id'], erro)
                 
-                if sucesso:
-                    result.sucesso = True
-                    result.node_usado = node_info['node_id']
-                    print(f"✅ Chunk {chunk_numero} enviado para {node_info['node_id']} ({node_info['tipo']}) (tentativa {tentativa + 1})")
-                    return result
-                else:
-                    result.erro = erro
-                    print(f"⚠️ Tentativa {tentativa + 1} falhou para chunk {chunk_numero} no nó {node_info['node_id']}: {erro}")
-                    self._report_node_failure(node_info['node_id'], erro)
-                    
-            except Exception as e:
-                result.erro = f"Erro inesperado: {str(e)}"
-                print(f"❌ Erro inesperado no chunk {chunk_numero}, tentativa {tentativa + 1}: {e}")
+        except Exception as e:
+            result.erro = f"Erro inesperado: {str(e)}"
+            print(f"❌ Erro inesperado no chunk {chunk_numero}: {e}")
         
         return result
 
@@ -503,31 +509,18 @@ class AdvancedBigFSClient:
                 self.metadata_client.remove_file(remote_path) # Limpeza
                 return False
 
-            # Pré-registrar cada chunk para alocar nós antes do upload
-            print("INFO: Pré-registrando chunks e alocando nós de armazenamento...")
+            # Criar mapa de localizações baseado no plano de distribuição
+            chunk_locations_map = {}
             for i, (chunk_numero, _, checksum) in enumerate(chunks):
                 primary_node_id = chunk_assignment_plan[i]
-                
-                chunk_registration_success = self.metadata_client.register_chunk(
-                    remote_path,
-                    chunk_numero,
-                    primary_node_id,
-                    [],  # Réplicas tratadas pelo nó
-                    checksum,
-                    len(chunks[chunk_numero][1])
-                )
-                
-                if not chunk_registration_success:
-                    print(f"❌ Falha ao pré-registrar metadados do chunk {chunk_numero}")
-                    self.metadata_client.remove_file(remote_path) # Limpeza
-                    return False
-            
-            print("✅ Todos os chunks foram pré-registrados com sucesso.")
-
-            # Obter as localizações finais (agora com réplicas se o servidor as designou)
-            chunk_locations_list = self.metadata_client.get_chunk_locations(remote_path)
-            if not chunk_locations_list: return False
-            chunk_locations_map = {c.chunk_numero: c for c in chunk_locations_list}
+                # Criar uma estrutura temporária para o chunk com apenas o nó primário
+                chunk_location = type('ChunkLocation', (), {
+                    'chunk_numero': chunk_numero,
+                    'no_primario': primary_node_id,
+                    'nos_replicas': [],
+                    'checksum': checksum
+                })()
+                chunk_locations_map[chunk_numero] = chunk_location
 
             # Upload paralelo com retry inteligente
             uploader = IntelligentChunkUploader(self, node_map)

@@ -263,11 +263,30 @@ class MetadataManager:
             return False
     
     def register_chunk(self, chunk_metadata: ChunkMetadata) -> bool:
-        """Registra um chunk no sistema"""
+        """Registra um chunk no sistema e designa réplicas automaticamente"""
         try:
             with self.lock:
                 chunk_key = self._get_chunk_key(chunk_metadata.arquivo_nome, 
                                                chunk_metadata.chunk_numero)
+                
+                # NOVA ARQUITETURA: Designar réplicas automaticamente
+                # O nó primário já está definido (quem enviou o chunk)
+                primary_node_id = chunk_metadata.no_primario
+                
+                # Selecionar nós para réplicas, excluindo o nó primário
+                replica_nodes = self._select_replica_nodes_for_chunk(
+                    chunk_metadata.arquivo_nome, 
+                    chunk_metadata.chunk_numero,
+                    exclude_node=primary_node_id,
+                    num_replicas=2
+                )
+                
+                # Atualizar os metadados do chunk com as réplicas designadas
+                chunk_metadata.nos_replicas = replica_nodes
+                
+                print(f"✅ Chunk {chunk_key} registrado - Primário: {primary_node_id}, Réplicas: {replica_nodes}")
+                
+                # Salvar os metadados do chunk
                 self.chunks[chunk_key] = chunk_metadata
                 
                 # Atualizar informações dos nós
@@ -281,6 +300,28 @@ class MetadataManager:
         except Exception as e:
             print(f"Erro ao registrar chunk {chunk_key}: {e}")
             return False
+    
+    def _select_replica_nodes_for_chunk(self, arquivo_nome: str, chunk_numero: int, 
+                                       exclude_node: str, num_replicas: int = 2) -> List[str]:
+        """Seleciona nós para réplicas de um chunk, excluindo o nó primário"""
+        with self.lock:
+            active_nodes = [node_id for node_id, node in self.nodes.items() 
+                           if node.status == "ATIVO" and node_id != exclude_node]
+            
+            if len(active_nodes) == 0:
+                return []
+            
+            # Usar hash do nome do arquivo + chunk para distribuição consistente
+            chunk_key = self._get_chunk_key(arquivo_nome, chunk_numero)
+            hash_value = self._hash_for_node_selection(chunk_key + exclude_node)  # Incluir nó primário no hash
+            
+            # Selecionar nós para réplicas
+            selected_replicas = []
+            for i in range(min(num_replicas, len(active_nodes))):
+                replica_index = (hash_value + i) % len(active_nodes)
+                selected_replicas.append(active_nodes[replica_index])
+            
+            return selected_replicas
     
     def get_chunk_locations(self, nome_arquivo: str) -> List[ChunkMetadata]:
         """Obtém localização de todos os chunks de um arquivo"""
