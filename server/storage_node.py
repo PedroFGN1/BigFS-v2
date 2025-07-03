@@ -283,7 +283,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
                                 arquivo_nome,
                                 i,
                                 self.node_id,
-                                [],  # Réplicas serão adicionadas depois
+                                [],  # Réplicas serão designadas depois
                                 checksum_chunk,
                                 len(chunk_data)
                             )
@@ -533,26 +533,36 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
             print(f"Iniciando replicação do chunk {arquivo_nome}:{chunk_numero}")
             
             # Consultar o MetadataServer para obter a lista de nós de réplica
-            chunk_info = self.metadata_client.get_chunk_info(arquivo_nome, chunk_numero)
-            if not chunk_info or not hasattr(chunk_info, 'replicas'):
-                print(f"Nenhum nó de réplica encontrado para {arquivo_nome}:{chunk_numero}")
+            chunk_info_response = self.metadata_client.get_chunk_info(arquivo_nome, chunk_numero)
+            if not chunk_info_response or not chunk_info_response.sucesso:
+                print(f"AVISO: Não foi possível obter informações para o chunk {arquivo_nome}:{chunk_numero}. Mensagem: {chunk_info_response.mensagem if chunk_info_response else 'Erro desconhecido'}")
                 return
             
-            nos_replica = chunk_info.replicas
-            if not nos_replica:
-                print(f"Lista de nós de réplica vazia para {arquivo_nome}:{chunk_numero}")
+            chunk_info = chunk_info_response.metadata
+            if not chunk_info or not hasattr(chunk_info, 'replicas'):
+                print(f"Nenhum metadado de chunk ou réplica encontrado para {arquivo_nome}:{chunk_numero}")
+                return
+            
+            # Filtrar réplicas com status PENDING
+            nos_replica_pendentes = [r for r in chunk_info.replicas if r.status == fs_pb2.ReplicaStatus.PENDING]
+
+            if not nos_replica_pendentes:
+                print(f"Nenhum nó de réplica PENDING encontrado para {arquivo_nome}:{chunk_numero}")
                 return
             
             # Conectar a cada nó de réplica e enviar o chunk
-            for replica_node_id in nos_replica:
+            for replica_info in nos_replica_pendentes:
                 try:
+                    replica_node_id = replica_info.node_id
                     print(f"Replicando chunk para nó {replica_node_id}")
                     
                     # Obter informações completas do nó de réplica do servidor de metadados
-                    replica_node_info = self.metadata_client.get_node_info(replica_node_id)
-                    if not replica_node_info:
+                    replica_node_info_response = self.metadata_client.get_node_info(replica_node_id)
+                    if not replica_node_info_response or not replica_node_info_response.sucesso:
                         print(f"Informações do nó {replica_node_id} não encontradas no servidor de metadados")
                         continue
+                    
+                    replica_node_info = replica_node_info_response.node_info
                     
                     # Usar conexão em cache para o nó de réplica
                     stub = self._get_node_connection(replica_node_info)
@@ -705,8 +715,7 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
         )
     
     def VerificarIntegridade(self, request, context):
-        """
-        Verifica a integridade de um chunk, buscando o checksum esperado
+        """Verifica a integridade de um chunk, buscando o checksum esperado
         diretamente do servidor de metadados.
         """
         try:
@@ -717,10 +726,10 @@ class ExtendedFileSystemServiceServicer(fs_grpc.FileSystemServiceServicer):
 
             chunk_info_response = self.metadata_client.get_chunk_info(request.arquivo_nome, request.chunk_numero)
             
-            if not chunk_info_response:
-                return fs_pb2.IntegrityResponse(sucesso=False, mensagem="Não foi possível obter os metadados do chunk do servidor.")
+            if not chunk_info_response or not chunk_info_response.sucesso:
+                return fs_pb2.IntegrityResponse(sucesso=False, mensagem=f"Não foi possível obter os metadados do chunk do servidor. Mensagem: {chunk_info_response.mensagem if chunk_info_response else 'Erro desconhecido'}")
 
-            checksum_esperado = chunk_info_response.checksum
+            checksum_esperado = chunk_info_response.metadata.checksum
 
             # 2. Ler os dados do chunk localmente.
             sucesso, mensagem, dados_chunk = ler_chunk(
@@ -822,3 +831,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     serve(args.port, args.node_id, args.metadata_server, args.storage_dir, args.chunk_size)
+
+
+

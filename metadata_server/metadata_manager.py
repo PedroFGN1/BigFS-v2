@@ -17,6 +17,7 @@ from concurrent import futures
 import filesystem_extended_pb2 as fs_pb2
 import filesystem_extended_pb2_grpc as fs_grpc
 
+
 @dataclass
 class FileMetadata:
     """Metadados de um arquivo no sistema"""
@@ -31,11 +32,7 @@ class FileMetadata:
     esta_completo: bool = False
     status: str = "ativo"  # ativo, deletando, completo
 
-@dataclass
-class ReplicaInfo:
-    """Informações sobre uma réplica com seu estado"""
-    node_id: str
-    status: str = "PENDING"  # PENDING, AVAILABLE, DELETING
+
 
 @dataclass
 class ChunkMetadata:
@@ -43,7 +40,7 @@ class ChunkMetadata:
     arquivo_nome: str
     chunk_numero: int
     no_primario: str
-    replicas: List[ReplicaInfo]  # Lista de réplicas com seus estados
+    replicas: List[str]  # Lista de réplicas com seus estados
     checksum: str
     tamanho_chunk: int
     timestamp_criacao: int
@@ -128,8 +125,20 @@ class MetadataManager:
                     for key, data in chunks_data.items():
                         # Converte a lista de dicionários de réplicas de volta para uma lista de objetos ReplicaInfo
                         if 'replicas' in data and isinstance(data['replicas'], list):
-                            replicas_obj_list = [ReplicaInfo(**replica_dict) for replica_dict in data['replicas']]
-                            data['replicas'] = replicas_obj_list
+                            # Agora, ReplicaInfo é um objeto Protobuf, não um dataclass
+                            replicas_pb_list = []
+                            for replica_dict in data['replicas']:
+                                replica_pb = fs_pb2.ReplicaInfo()
+                                replica_pb.node_id = replica_dict['node_id']
+                                # Mapear string para enum Protobuf
+                                if replica_dict['status'] == 'PENDING':
+                                    replica_pb.status = fs_pb2.ReplicaStatus.PENDING
+                                elif replica_dict['status'] == 'AVAILABLE':
+                                    replica_pb.status = fs_pb2.ReplicaStatus.AVAILABLE
+                                elif replica_dict['status'] == 'DELETING':
+                                    replica_pb.status = fs_pb2.ReplicaStatus.DELETING
+                                replicas_pb_list.append(replica_pb)
+                            data['replicas'] = replicas_pb_list
                         else:
                             # Garante que o campo 'replicas' exista mesmo que vazio
                             data['replicas'] = []
@@ -160,7 +169,16 @@ class MetadataManager:
                 json.dump(files_data, f, indent=2)
             
             # Salvar chunks
-            chunks_data = {key: asdict(metadata) for key, metadata in self.chunks.items()}
+            chunks_data = {}
+            for key, metadata in self.chunks.items():
+                # Converter objetos ReplicaInfo de Protobuf para dicionários para serialização JSON
+                chunk_dict = asdict(metadata)
+                if 'replicas' in chunk_dict:
+                    chunk_dict['replicas'] = [
+                        {'node_id': r.node_id, 'status': fs_pb2.ReplicaStatus.Name(r.status)}
+                        for r in metadata.replicas
+                    ]
+                chunks_data[key] = chunk_dict
             with open(os.path.join(self.data_dir, "chunks.json"), 'w') as f:
                 json.dump(chunks_data, f, indent=2)
             
@@ -299,7 +317,7 @@ class MetadataManager:
                 )
                 
                 # Atualizar os metadados do chunk com as réplicas designadas
-                chunk_metadata.replicas = replica_nodes
+                chunk_metadata.replicas.extend(replica_nodes)
                 
                 replica_ids = [r.node_id for r in replica_nodes]
                 print(f"✅ Chunk {chunk_key} registrado - Primário: {primary_node_id}, Réplicas: {replica_ids} (PENDING)")
@@ -326,7 +344,7 @@ class MetadataManager:
             return False
     
     def _select_replica_nodes_for_chunk(self, arquivo_nome: str, chunk_numero: int, 
-                                       exclude_node: str, num_replicas: int = 2) -> List[ReplicaInfo]:
+                                       exclude_node: str, num_replicas: int = 2) -> List[fs_pb2.ReplicaInfo]:
         """Seleciona nós para réplicas de um chunk, excluindo o nó primário"""
         with self.lock:
             active_nodes = [node_id for node_id, node in self.nodes.items() 
@@ -343,9 +361,9 @@ class MetadataManager:
             selected_replicas = []
             for i in range(min(num_replicas, len(active_nodes))):
                 replica_index = (hash_value + i) % len(active_nodes)
-                replica_info = ReplicaInfo(
+                replica_info = fs_pb2.ReplicaInfo(
                     node_id=active_nodes[replica_index],
-                    status="PENDING"  # Inicialmente PENDING
+                    status=fs_pb2.ReplicaStatus.PENDING  # Inicialmente PENDING
                 )
                 selected_replicas.append(replica_info)
             
@@ -367,13 +385,13 @@ class MetadataManager:
                 replica_found = False
                 for replica_info in chunk_metadata.replicas:
                     if replica_info.node_id == replica_id:
-                        if replica_info.status == "PENDING":
-                            replica_info.status = "AVAILABLE"
+                        if replica_info.status == fs_pb2.ReplicaStatus.PENDING:
+                            replica_info.status = fs_pb2.ReplicaStatus.AVAILABLE
                             replica_found = True
                             print(f"✅ Réplica {replica_id} confirmada para chunk {chunk_key}")
                             break
                         else:
-                            print(f"⚠️ Réplica {replica_id} já está no status {replica_info.status}")
+                            print(f"⚠️ Réplica {replica_id} já está no status {fs_pb2.ReplicaStatus.Name(replica_info.status)}")
                             return True  # Já confirmada
                 
                 if not replica_found:
@@ -495,10 +513,10 @@ class MetadataManager:
                         return self.nodes[chunk_metadata.no_primario]
                     
                     # Tentar réplicas
-                    for replica_id in chunk_metadata.replicas:
-                        if (replica_id in self.nodes and 
-                            self.nodes[replica_id].status == "ATIVO"):
-                            return self.nodes[replica_id]
+                    for replica_info in chunk_metadata.replicas:
+                        if (replica_info.node_id in self.nodes and 
+                            self.nodes[replica_info.node_id].status == "ATIVO"):
+                            return self.nodes[replica_info.node_id]
             else:
                 # Operação em arquivo completo - selecionar nó com mais espaço disponível
                 active_nodes = [node for node in self.nodes.values() if node.status == "ATIVO"]
@@ -527,11 +545,11 @@ class MetadataManager:
                 available_replicas.append(self.nodes[chunk_metadata.no_primario])
             
             # Verificar réplicas
-            for replica_id in chunk_metadata.replicas:
-                if (replica_id != failed_node and 
-                    replica_id in self.nodes and
-                    self.nodes[replica_id].status == "ATIVO"):
-                    available_replicas.append(self.nodes[replica_id])
+            for replica_info in chunk_metadata.replicas:
+                if (replica_info.node_id != failed_node and 
+                    replica_info.node_id in self.nodes and
+                    self.nodes[replica_info.node_id].status == "ATIVO"):
+                    available_replicas.append(self.nodes[replica_info.node_id])
             
             return available_replicas
     
@@ -627,8 +645,8 @@ class MetadataManager:
         with self.lock:
             for chunk_metadata in chunks_to_remove:
                 for replica_info in chunk_metadata.replicas:
-                    if replica_info.status == "AVAILABLE":
-                        replica_info.status = "DELETING"
+                    if replica_info.status == fs_pb2.ReplicaStatus.AVAILABLE:
+                        replica_info.status = fs_pb2.ReplicaStatus.DELETING
                         print(f"INFO: Réplica {replica_info.node_id} marcada como DELETING para chunk {chunk_metadata.arquivo_nome}:{chunk_metadata.chunk_numero}")
             
             # Salvar as alterações de status
@@ -661,16 +679,16 @@ class MetadataManager:
         
         # 2. Para réplicas, verificar status primeiro
         for replica_info in chunk_metadata.replicas:
-            if replica_info.status == "DELETING":
+            if replica_info.status == fs_pb2.ReplicaStatus.DELETING:
                 # Só tentar apagar réplicas em estado DELETING
                 replica_removed = self._try_remove_chunk_from_single_node(
                     arquivo_nome, chunk_numero, chunk_metadata, replica_info.node_id, is_primary=False
                 )
                 if not replica_removed:
                     removal_success = False
-            elif replica_info.status in ["PENDING", "AVAILABLE"]:
+            elif replica_info.status in [fs_pb2.ReplicaStatus.PENDING, fs_pb2.ReplicaStatus.AVAILABLE]:
                 # Ignorar réplicas que não estão marcadas para deleção
-                print(f"INFO: Ignorando réplica {replica_info.node_id} com status {replica_info.status}")
+                print(f"INFO: Ignorando réplica {replica_info.node_id} com status {fs_pb2.ReplicaStatus.Name(replica_info.status)}")
         
         return removal_success
     

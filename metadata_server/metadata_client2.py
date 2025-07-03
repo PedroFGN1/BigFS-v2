@@ -98,11 +98,15 @@ class MetadataClient:
                       replicas: list, checksum: str, tamanho_chunk: int) -> bool:
         """Registra um chunk no sistema"""
         try:
+            # Converter a lista de ReplicaInfo (dataclass) para objetos Protobuf
+            # Se 'replicas' já for uma lista de objetos Protobuf, não é necessário converter
+            # A lista 'replicas' que chega aqui já deve ser de objetos fs_pb2.ReplicaInfo, pois é assim que o metadata_manager.py a constrói e a passa.
+            
             request = fs_pb2.ChunkMetadataRequest(
                 arquivo_nome=arquivo_nome,
                 chunk_numero=chunk_numero,
                 no_primario=no_primario,
-                replicas=replicas,
+                replicas=replicas, # replicas já deve ser uma lista de fs_pb2.ReplicaInfo
                 checksum=checksum,
                 tamanho_chunk=tamanho_chunk,
                 timestamp_criacao=int(time.time())
@@ -352,7 +356,7 @@ class MetadataClient:
             print(f"Erro na comunicação ao obter informações do arquivo: {e}")
             return None
 
-    def get_chunk_info(self, arquivo_nome: str, chunk_numero: int) -> Optional[fs_pb2.ChunkLocation]:
+    def get_chunk_info(self, arquivo_nome: str, chunk_numero: int) -> Optional[fs_pb2.ChunkMetadataResponse]:
         """Busca os metadados de um único chunk do servidor."""
         try:
             request = fs_pb2.ChunkRequest(
@@ -362,7 +366,7 @@ class MetadataClient:
             response = self.stub.GetChunkInfo(request)
 
             if response.sucesso:
-                return response.metadata # Retorna o objeto ChunkLocation
+                return response # Retorna o objeto ChunkMetadataResponse
             else:
                 print(f"AVISO: Não foi possível obter informações para o chunk {arquivo_nome}:{chunk_numero}. Mensagem: {response.mensagem}")
                 return None
@@ -484,3 +488,4 @@ if __name__ == "__main__":
     
     finally:
         client.close()
+

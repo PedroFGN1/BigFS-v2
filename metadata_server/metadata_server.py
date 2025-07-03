@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'p
 
 import filesystem_extended_pb2 as fs_pb2
 import filesystem_extended_pb2_grpc as fs_grpc
-from metadata_manager import MetadataManager, FileMetadata, ChunkMetadata, NodeInfo, ReplicaInfo
+from metadata_manager import MetadataManager, FileMetadata, ChunkMetadata, NodeInfo
 
 class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
     """Implementação do serviço de metadados"""
@@ -115,11 +115,19 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
     def RegistrarChunk(self, request, context):
         """Registra metadados de um chunk"""
         try:
+            # Converter a lista de ReplicaInfo do protobuf para a dataclass ReplicaInfo
+            replicas_dataclass = []
+            for replica_pb in request.replicas:
+                replicas_dataclass.append(fs_pb2.ReplicaInfo(
+                    node_id=replica_pb.node_id,
+                    status=fs_pb2.ReplicaStatus.Name(replica_pb.status)
+                ))
+
             chunk_metadata = ChunkMetadata(
                 arquivo_nome=request.arquivo_nome,
                 chunk_numero=request.chunk_numero,
                 no_primario=request.no_primario,
-                replicas=request.replicas,  # Lista de ReplicaInfo
+                replicas=replicas_dataclass,  # Lista de ReplicaInfo (dataclass)
                 checksum=request.checksum,
                 tamanho_chunk=request.tamanho_chunk,
                 timestamp_criacao=request.timestamp_criacao,
@@ -155,7 +163,7 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                 
                 # Construir a lista de réplicas no formato esperado pelo gRPC
                 replicas_pb = []
-                # Iterar sobre a lista de dataclasses ReplicaInfo
+                '''# Iterar sobre a lista de dataclasses ReplicaInfo
                 for replica_info_dataclass in chunk_metadata.replicas:
                     # Converter a dataclass para o objeto gRPC
                     replica_info_pb = fs_pb2.ReplicaInfo(
@@ -164,12 +172,12 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
                         status=fs_pb2.ReplicaStatus.Value(replica_info_dataclass.status)
                     )
                     replicas_pb.append(replica_info_pb)
-
+                '''
 
                 chunk_location = fs_pb2.ChunkLocation(
                     chunk_numero=chunk_metadata.chunk_numero,
                     no_primario=chunk_metadata.no_primario,
-                    replicas=replicas_pb,
+                    replicas=chunk_metadata.replicas,  # Já deve ser uma lista de objetos fs_pb2.ReplicaInfo
                     checksum=chunk_metadata.checksum,
                     tamanho_chunk=chunk_metadata.tamanho_chunk,
                     disponivel=chunk_metadata.disponivel
@@ -397,7 +405,7 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
         try:
             status = self.metadata_manager.get_system_status()
             
-            # Converter detalhes dos nós se solicitado
+            # Converter detalhes dos nos se solicitado
             detalhes_nos_pb = []
             if request.incluir_detalhes_nos:
                 for node in status['detalhes_nos']:
@@ -468,13 +476,19 @@ class MetadataServiceServicer(fs_grpc.MetadataServiceServicer):
 
             if chunk_metadata:
                 # Traduzir a lista de réplicas para o formato do protocolo
-                replica_ids = [replica for replica in chunk_metadata.replicas]
+                '''replicas_pb = []
+                print(f"ChunkMetadata: {chunk_metadata}")
+                for replica_dataclass in chunk_metadata.replicas:
+                    replicas_pb.append(fs_pb2.ReplicaInfo(
+                        node_id=replica_dataclass.node_id,
+                        status=fs_pb2.ReplicaStatus.Value(replica_dataclass.status)
+                    ))'''
 
                 # Converte o objeto ChunkMetadata do dataclass para o objeto ChunkLocation do protobuf
                 chunk_location_pb = fs_pb2.ChunkLocation(
                     chunk_numero=chunk_metadata.chunk_numero,
                     no_primario=chunk_metadata.no_primario,
-                    replicas=replica_ids,
+                    replicas=chunk_metadata.replicas,  # Já deve ser uma lista de objetos fs_pb2.ReplicaInfo
                     checksum=chunk_metadata.checksum,
                     tamanho_chunk=chunk_metadata.tamanho_chunk,
                     disponivel=chunk_metadata.disponivel
@@ -581,4 +595,5 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     serve(args.port, args.data_dir)
+
 
